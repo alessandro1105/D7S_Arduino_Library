@@ -92,10 +92,10 @@ class D7SClass {
 
    public: 
 
-      //costructors/destryers
+      //--- CONSTRUCTOR/DESTROYER ---
       D7SClass(); //constructor
 
-      //begin class
+      //--- BEGIN ---
       void begin(); //used to initialize Wire
 
       //--- STATUS ---
@@ -103,22 +103,22 @@ class D7SClass {
       d7s_axis_state getAxisInUse(); //return the current axis in use
 
       //--- SETTINGS ---
-      //void setThreshold(d7s_threshold threshold); //change the threshold in use
-      //void setAxis(d7s_axis_settings axisMode); //change the axis selection mode
+      void setThreshold(d7s_threshold threshold); //change the threshold in use
+      void setAxis(d7s_axis_settings axisMode); //change the axis selection mode
 
       //--- LASTEST DATA ---
-      //float getLastestSI(uint8_t index); //get the lastest SI at specified index (up to 5) [m/s]
-      //float getLastestPGA(uint8_t index); //get the lastest PGA at specified index (up to 5) [m/s^2]
-      //float getLastestTemperature(uint8_t index); //get the lastest Temperature at specified index (up to 5) [Celsius]
+      float getLastestSI(uint8_t index); //get the lastest SI at specified index (up to 5) [m/s]
+      float getLastestPGA(uint8_t index); //get the lastest PGA at specified index (up to 5) [m/s^2]
+      float getLastestTemperature(uint8_t index); //get the lastest Temperature at specified index (up to 5) [Celsius]
 
       //--- RANKED DATA ---
-      //float getRankedSI(uint8_t position); //get the ranked SI at specified position (up to 5) [m/s]
-      //float getRankedPGA(uint8_t position); //get the ranked PGA at specified position (up to 5) [m/s^2]
-      //float getRankedTemperature(uint8_t position); //get the ranked Temperature at specified position (up to 5) [Celsius]
+      float getRankedSI(uint8_t position); //get the ranked SI at specified position (up to 5) [m/s]
+      float getRankedPGA(uint8_t position); //get the ranked PGA at specified position (up to 5) [m/s^2]
+      float getRankedTemperature(uint8_t position); //get the ranked Temperature at specified position (up to 5) [Celsius]
 
       //--- INSTANTANEUS DATA ---
-      //float getInstantaneusSI(); //get instantaneus SI (during an earthquake)
-      //float getInstantaneusPGA(); //get instantaneus PGA (during an earthquake)
+      float getInstantaneusSI(); //get instantaneus SI (during an earthquake) [m/s]
+      float getInstantaneusPGA(); //get instantaneus PGA (during an earthquake) [m/s^2]
 
       //--- CLEAR MEMORY ---
       //void clearEarthquakeData(); //delete both the lastest data and the ranked data
@@ -149,11 +149,12 @@ class D7SClass {
 
    private:
 
-      //read 8 bit from the specified register (register address splitted into highbits and lowbits)
-      uint8_t read8bit(uint8_t regH, uint8_t regL);
+      //--- READ ---
+      uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register
+      uint16_t read16bit(uint8_t regH, uint8_t regL); //read 16 bit from the specified register
 
-      //read 16 bit from the specified register (register address splitted into highbits and lowbits)
-      uint8_t read16bit(uint8_t regH, uint8_t regL);
+      //--- WRITE ---
+      void write8bit(uint8_t regH, uint8_t regL, uint8_t val); //write 8 bit to the register specified
 
 
 
