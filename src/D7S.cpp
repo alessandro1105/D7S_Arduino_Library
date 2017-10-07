@@ -146,6 +146,37 @@ float D7SClass::getInstantaneusPGA() {
    return ((float) read16bit(0x20, 0x02)) / 1000;
 }
 
+//--- CLEAR MEMORY ---
+//delete both the lastest data and the ranked data
+void D7SClass::clearEarthquakeData() {
+   //write clear command
+   write8bit(0x10, 0x05, 0x01);
+}
+
+//delete initializzazion data
+void D7SClass::clearInstallationData() {
+   //write clear command
+   write8bit(0x10, 0x05, 0x08);
+}
+
+//delete offset data
+void D7SClass::clearLastestOffsetData() {
+   //write clear command
+   write8bit(0x10, 0x05, 0x04);
+}
+
+//delete selftest data
+void D7SClass::clearSelftestData() {
+   //write clear command
+   write8bit(0x10, 0x05, 0x02);
+}
+
+//delete all data
+void D7SClass::clearAllData() {
+   //write clear command
+   write8bit(0x10, 0x05, 0x0F);
+}
+
 
 //----------------------- PRIVATE INTERFACE -----------------------
 

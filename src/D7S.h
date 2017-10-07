@@ -68,7 +68,7 @@ typedef enum d7s_threshold {
 //message status (selftes, offset acquisition)
 typedef enum d7s_mode_status {
    OK = 0,
-   ERROR = 2
+   ERROR = 1
 };
 
 //event status for collapse/shutoff
@@ -121,11 +121,11 @@ class D7SClass {
       float getInstantaneusPGA(); //get instantaneus PGA (during an earthquake) [m/s^2]
 
       //--- CLEAR MEMORY ---
-      //void clearEarthquakeData(); //delete both the lastest data and the ranked data
-      //void clearInstallationData(); //delete initializzazion data
-      //void clearOffsetData(); //delete offset data
-      //void clearSelftestData(); //delete selftest data
-      //void clearAllData(); //delete all data
+      void clearEarthquakeData(); //delete both the lastest data and the ranked data
+      void clearInstallationData(); //delete initializzazion data
+      void clearLastestOffsetData(); //delete offset data
+      void clearSelftestData(); //delete selftest data
+      void clearAllData(); //delete all data
 
       //--- INITIALIZATION ---
       //void initialize(); //initialize the d7s (start the initial installation mode)
