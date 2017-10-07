@@ -24,6 +24,16 @@
 #define D7S_INT1_PIN 2 //D7S INT1 goes to Arduino pin 2
 #define D7S_INT2_PIN 3 //D7S INT2 goes to Arduino pin 3
 
+//--- ADDRESS ---
+#define D7S_ADDRESS 0x55 //D7S address on the I2C bus
+
+//DELAY
+#define D7S_WIRE_DELAY 50 //delay in ms to prevent error in trasmission
+
+//--- DEBUG ----
+//comment this line to disable all debug information
+#define DEBUG
+
 //d7s state
 typedef enum d7s_status {
    NORMAL_MODE = 0,
@@ -83,58 +93,69 @@ class D7SClass {
    public: 
 
       //costructors/destryers
-      D7S(void); //constructor
+      D7SClass(); //constructor
+
+      //begin class
+      void begin(); //used to initialize Wire
 
       //--- STATUS ---
-      d7s_status getStatus(); //methods that return the currect status
+      d7s_status getState(); //return the currect state
       d7s_axis_state getAxisInUse(); //return the current axis in use
 
       //--- SETTINGS ---
-      void setThreshold(d7s_threshold threshold); //change the threshold in use
-      void setAxis(d7s_axis_settings axisMode); //change the axis selection mode
+      //void setThreshold(d7s_threshold threshold); //change the threshold in use
+      //void setAxis(d7s_axis_settings axisMode); //change the axis selection mode
 
       //--- LASTEST DATA ---
-      float getLastestSI(uint8_t index); //get the lastest SI at specified index (up to 5) [m/s]
-      float getLastestPGA(uint8_t index); //get the lastest PGA at specified index (up to 5) [m/s^2]
-      float getLastestTemperature(uint8_t index); //get the lastest Temperature at specified index (up to 5) [Celsius]
+      //float getLastestSI(uint8_t index); //get the lastest SI at specified index (up to 5) [m/s]
+      //float getLastestPGA(uint8_t index); //get the lastest PGA at specified index (up to 5) [m/s^2]
+      //float getLastestTemperature(uint8_t index); //get the lastest Temperature at specified index (up to 5) [Celsius]
 
       //--- RANKED DATA ---
-      float getRankedSI(uint8_t position); //get the ranked SI at specified position (up to 5) [m/s]
-      float getRankedPGA(uint8_t position); //get the ranked PGA at specified position (up to 5) [m/s^2]
-      float getRankedTemperature(uint8_t position); //get the ranked Temperature at specified position (up to 5) [Celsius]
+      //float getRankedSI(uint8_t position); //get the ranked SI at specified position (up to 5) [m/s]
+      //float getRankedPGA(uint8_t position); //get the ranked PGA at specified position (up to 5) [m/s^2]
+      //float getRankedTemperature(uint8_t position); //get the ranked Temperature at specified position (up to 5) [Celsius]
 
       //--- INSTANTANEUS DATA ---
-      float getInstantaneusSI(); //get instantaneus SI (during an earthquake)
-      float getInstantaneusPGA(); //get instantaneus PGA (during an earthquake)
+      //float getInstantaneusSI(); //get instantaneus SI (during an earthquake)
+      //float getInstantaneusPGA(); //get instantaneus PGA (during an earthquake)
 
       //--- CLEAR MEMORY ---
-      void clearEarthquakeData(); //delete both the lastest data and the ranked data
-      void clearInstallationData(); //delete initializzazion data
-      void clearOffsetData(); //delete offset data
-      void clearSelftestData(); //delete selftest data
-      void clearAllData(); //delete all data
+      //void clearEarthquakeData(); //delete both the lastest data and the ranked data
+      //void clearInstallationData(); //delete initializzazion data
+      //void clearOffsetData(); //delete offset data
+      //void clearSelftestData(); //delete selftest data
+      //void clearAllData(); //delete all data
 
       //--- INITIALIZATION ---
-      void initialize(); //initialize the d7s (start the initial installation mode)
+      //void initialize(); //initialize the d7s (start the initial installation mode)
 
       //--- SELFTEST ---
-      d7s_mode_status selftest(); //start autodiagnostic and resturn the result (OK/ERROR)
+      //d7s_mode_status selftest(); //start autodiagnostic and resturn the result (OK/ERROR)
 
       //--- OFFSET ACQUISITION ---
-      d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
+      //d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
 
       //--- SHUTOFF/COLLAPSE EVENT ---
-      d7s_event_status getEvent(); //return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
+      //d7s_event_status getEvent(); //return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
 
       //--- EARTHQUAKE EVENT ---
-      uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
+      //uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
 
       //--- INTERRUPT ---
-      void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
-      void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
-      void addEventHandler(d7s_interrupt_event event, void (*handler) ()); //add event handler function
+      //void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
+      //void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
+      //void addEventHandler(d7s_interrupt_event event, void (*handler) ()); //add event handler function
 
    private:
+
+      //read 8 bit from the specified register (register address splitted into highbits and lowbits)
+      uint8_t read8bit(uint8_t regH, uint8_t regL);
+
+      //read 16 bit from the specified register (register address splitted into highbits and lowbits)
+      uint8_t read16bit(uint8_t regH, uint8_t regL);
+
+
 
 };
 
