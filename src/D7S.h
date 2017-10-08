@@ -36,33 +36,33 @@
 
 //d7s state
 typedef enum d7s_status {
-   NORMAL_MODE = 0,
-   NORMAL_MODE_NOT_IN_STANBY = 1, //earthquake in progress
-   INITIAL_INSTALLATION_MODE = 2,
-   OFFSET_ACQUISITION_MODE = 3,
-   SELFTEST_MODE = 4
+   NORMAL_MODE = 0x00,
+   NORMAL_MODE_NOT_IN_STANBY = 0x01, //earthquake in progress
+   INITIAL_INSTALLATION_MODE = 0x02,
+   OFFSET_ACQUISITION_MODE = 0x03,
+   SELFTEST_MODE = 0x04
 };
 
 //d7s axis settings
 typedef enum d7s_axis_settings {
-   FORCE_YZ = 0,
-   FORCE_XZ = 1,
-   FORXE_XY = 2,
-   AUTO_SWITCH = 3,
-   SWITCH_AT_INSTALLATION = 4 
+   FORCE_YZ = 0x00,
+   FORCE_XZ = 0x01,
+   FORXE_XY = 0x02,
+   AUTO_SWITCH = 0x03,
+   SWITCH_AT_INSTALLATION = 0x04 
 };
 
 //axis state
 typedef enum d7s_axis_state {
-   AXIS_YZ = 0,
-   AXIS_XZ = 1,
-   AXIS_XY = 2
+   AXIS_YZ = 0x00,
+   AXIS_XZ = 0x01,
+   AXIS_XY = 0x02
 };
 
 //d7s threshold settings
 typedef enum d7s_threshold {
-   THRESHOLD_HIGH = 0,
-   THRESHOLD_LOW = 1
+   THRESHOLD_HIGH = 0x00,
+   THRESHOLD_LOW = 0x01
 };
 
 //message status (selftes, offset acquisition)
@@ -128,19 +128,19 @@ class D7SClass {
       void clearAllData(); //delete all data
 
       //--- INITIALIZATION ---
-      //void initialize(); //initialize the d7s (start the initial installation mode)
+      void initialize(); //initialize the d7s (start the initial installation mode)
 
       //--- SELFTEST ---
-      //d7s_mode_status selftest(); //start autodiagnostic and resturn the result (OK/ERROR)
+      d7s_mode_status selftest(); //start autodiagnostic and resturn the result (OK/ERROR)
 
       //--- OFFSET ACQUISITION ---
-      //d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
+      d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
 
       //--- SHUTOFF/COLLAPSE EVENT ---
-      //d7s_event_status getEvent(); //return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
+      d7s_event_status getEvent(); //return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
 
       //--- EARTHQUAKE EVENT ---
-      //uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
+      uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
 
       //--- INTERRUPT ---
       //void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin

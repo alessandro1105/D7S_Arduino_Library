@@ -53,6 +53,10 @@ d7s_axis_state D7SClass::getAxisInUse() {
 //--- SETTINGS ---
 //change the threshold in use
 void D7SClass::setThreshold(d7s_threshold threshold) {
+   //check if threshold is valid
+   if (threshold < 0 || threshold > 1) {
+      return;
+   }
    //read the CTRL register at 0x1004
    uint8_t reg = read8bit(0x10, 0x04);
    //new register value with the threshold
@@ -63,6 +67,10 @@ void D7SClass::setThreshold(d7s_threshold threshold) {
 
 //change the axis selection mode
 void D7SClass::setAxis(d7s_axis_settings axisMode) {
+   //check if axisMode is valid
+   if (axisMode < 0 or axisMode > 4) {
+      return;
+   }
    //read the CTRL register at 0x1004
    uint8_t reg = read8bit(0x10, 0x04);
    //new register value with the threshold
@@ -177,6 +185,59 @@ void D7SClass::clearAllData() {
    write8bit(0x10, 0x05, 0x0F);
 }
 
+//--- INITIALIZATION ---
+//initialize the d7s (start the initial installation mode)
+void D7SClass::initialize() {
+   //write INITIAL INSTALLATION MODE command
+   write8bit(0x10, 0x03, 0x02);
+}
+
+//--- SELFTEST ---
+//start autodiagnostic and resturn the result (OK/ERROR)
+d7s_mode_status D7SClass::selftest() {
+   //write SELFTEST command
+   write8bit(0x10, 0x03, 0x04);
+   //white until selftest ends
+   while (getState() == 0x04)
+      ;
+   //return result of the selftest
+   return (read8bit(0x10, 0x02) && 0x07) >> 2;
+}
+
+//--- OFFSET ACQUISITION ---
+//start offset acquisition and return the rersult (OK/ERROR)
+d7s_mode_status D7SClass::acquireOffset() {
+   //write OFFSET ACQUISITION MODE command
+   write8bit(0x10, 0x03, 0x03);
+   //white until selftest ends
+   while (getState() == 0x03)
+      ;
+   //return result of the selftest
+   return (read8bit(0x10, 0x02) 0x0F) >> 3;
+}
+
+//--- SHUTOFF/COLLAPSE EVENT ---
+//return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
+d7s_event_status D7SClass::getEvent() {
+   //read the EVENT register at 0x1002
+   uint8_t reg = read8bit(0x10, 0x02) && 0x03;
+   //if reg == 0x02 => COLLAPSE event occur
+   if (reg == 0x02) {
+      return COLLAPSE;
+   //SHUTOFF event occur
+   } else {
+      return SHUTOFF;
+   }
+}
+
+//--- EARTHQUAKE EVENT ---
+//return true if an earthquake is occuring
+uint8_t D7SClass::isEarthquakeOccuring() {
+   //if D7S is in NORMAL MODE NOT IN STANBY (after the first 4 sec to initial delay) there is an earthquake
+   return read8bit(0x10, 0x00) == 0x01;
+}
+
+
 
 //----------------------- PRIVATE INTERFACE -----------------------
 
@@ -290,7 +351,7 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
 }
 
 //write 8 bit to the register specified
-void write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
+void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- write8bit ---");
