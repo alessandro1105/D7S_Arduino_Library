@@ -73,17 +73,17 @@ typedef enum d7s_mode_status {
 
 //event status for collapse/shutoff
 typedef enum d7s_event_status {
-   NONE = 0,
-   SHUTOFF = 1,
-   COLLAPSE = 2,
+   NONE = 0x00,
+   SHUTOFF = 0x01,
+   COLLAPSE = 0x02,
 };
 
 //events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
 typedef enum d7s_interrupt_event {
    START_EARTHQUAKE = 0, //INT 2
    END_EARTHQUAKE = 1, //INT 2
-   SHUTOFF_EVENT = 3, //INT 1
-   COLLAPSE_EVENT = 4 //INT 1
+   SHUTOFF_EVENT = 2, //INT 1
+   COLLAPSE_EVENT = 3 //INT 1
 };
 
 
@@ -143,11 +143,16 @@ class D7SClass {
       uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
 
       //--- INTERRUPT ---
-      //void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
-      //void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
-      //void addEventHandler(d7s_interrupt_event event, void (*handler) ()); //add event handler function
+      void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
+      void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
+      void addEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
 
    private:
+      //handler array (it cointaint the pointer to the user defined array)
+      void (*_handlers[4]) ();
+
+      //selftest/offset acquisition or initial installation triggered
+      uint8_t _eventTriggered;
 
       //--- READ ---
       uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register
@@ -156,7 +161,13 @@ class D7SClass {
       //--- WRITE ---
       void write8bit(uint8_t regH, uint8_t regL, uint8_t val); //write 8 bit to the register specified
 
+      //--- EVENT HANDLER ---
+      void int1(); //handle the INT1 events
+      void int2(); //handle the INT2 events
 
+      //--- ISR HANDLER ---
+      static void isr1(); //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
+      static void isr2(); //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
 
 };
 
