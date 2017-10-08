@@ -29,10 +29,11 @@
 
 //DELAY
 #define D7S_WIRE_DELAY 50 //delay in ms to prevent error in trasmission
+#define D7S_DELAY_IN_PROCESSING 200 //delay in ms to wait when switching mode to prevent aggressive polling
 
 //--- DEBUG ----
 //comment this line to disable all debug information
-#define DEBUG
+//#define DEBUG
 
 //d7s state
 typedef enum d7s_status {

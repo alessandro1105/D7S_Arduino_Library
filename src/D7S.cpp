@@ -41,6 +41,10 @@ D7SClass::D7SClass() {
 void D7SClass::begin() {
    //begin Wire
    Wire.begin();
+   //wait while the D7S is busy
+   while (getState() != NORMAL_MODE) {
+      delay(D7S_DELAY_IN_PROCESSING);
+   }
 }
 
 //--- STATUS ---
@@ -89,62 +93,62 @@ void D7SClass::setAxis(d7s_axis_settings axisMode) {
 //get the lastest SI at specified index (up to 5) [m/s]
 float D7SClass::getLastestSI(uint8_t index) {
    //check if the index is in bound
-   if (index < 1 || index > 5) {
+   if (index < 0 || index > 4) {
       return 0;
    }
    //return the value
-   return ((float) read16bit(0x30 + index -1, 0x08)) / 1000;
+   return ((float) read16bit(0x30 + index, 0x08)) / 1000;
 }
 
 //get the lastest PGA at specified index (up to 5) [m/s^2]
 float D7SClass::getLastestPGA(uint8_t index) {
    //check if the index is in bound
-   if (index < 1 || index > 5) {
+   if (index < 0 || index > 4) {
       return 0;
    }
    //return the value
-   return ((float) read16bit(0x30 + index -1, 0x0A)) / 1000;
+   return ((float) read16bit(0x30 + index, 0x0A)) / 1000;
 }
 
 //get the lastest Temperature at specified index (up to 5) [Celsius]
 float D7SClass::getLastestTemperature(uint8_t index) {
    //check if the index is in bound
-   if (index < 1 || index > 5) {
+   if (index < 0 || index > 4) {
       return 0;
    }
    //return the value
-   return (float) ((int16_t) read16bit(0x30 + index -1, 0x06)) / 10;
+   return (float) ((int16_t) read16bit(0x30 + index, 0x06)) / 10;
 }
 
 //--- RANKED DATA ---
 //get the ranked SI at specified position (up to 5) [m/s]
 float D7SClass::getRankedSI(uint8_t position) {
    //check if the position is in bound
-   if (position < 1 || position > 5) {
+   if (position < 0 || position > 4) {
       return 0;
    }
    //return the value
-   return ((float) read16bit(0x30 + position +4, 0x08)) / 1000;
+   return ((float) read16bit(0x30 + position +5, 0x08)) / 1000;
 }
 
 //get the ranked PGA at specified position (up to 5) [m/s^2]
 float D7SClass::getRankedPGA(uint8_t position) {
    //check if the position is in bound
-   if (position < 1 || position > 5) {
+   if (position < 0 || position > 4) {
       return 0;
    }
    //return the value
-   return ((float) read16bit(0x30 + position +4, 0x0A)) / 1000;
+   return ((float) read16bit(0x30 + position +5, 0x0A)) / 1000;
 }
 
 //get the ranked Temperature at specified position (up to 5) [Celsius]
 float D7SClass::getRankedTemperature(uint8_t position) {
    //check if the position is in bound
-   if (position < 1 || position > 5) {
+   if (position < 0 || position > 4) {
       return 0;
    }
    //return the value
-   return (float) ((int16_t) read16bit(0x30 + position +4, 0x06)) / 10;
+   return (float) ((int16_t) read16bit(0x30 + position +5, 0x06)) / 10;
 }
 
 //--- INSTANTANEUS DATA ---
@@ -199,9 +203,9 @@ void D7SClass::initialize() {
    //write INITIAL INSTALLATION MODE command
    write8bit(0x10, 0x03, 0x02);
    //white until intial installation ends
-   while (getState() == NORMAL_MODE)
-      ;
-   //set that the event triggered is ended (no interrupt)
+   while (getState() != NORMAL_MODE) {
+      delay(D7S_DELAY_IN_PROCESSING);
+   }
    _eventTriggered = 0;
 }
 
@@ -213,8 +217,9 @@ d7s_mode_status D7SClass::selftest() {
    //write SELFTEST command
    write8bit(0x10, 0x03, 0x04);
    //white until selftest ends
-   while (getState() == NORMAL_MODE)
-      ;
+   while (getState() != NORMAL_MODE) {
+      delay(D7S_DELAY_IN_PROCESSING);
+   }
    //set that the event triggered is ended (no interrupt)
    _eventTriggered = 0;
    //return result of the selftest
@@ -229,8 +234,9 @@ d7s_mode_status D7SClass::acquireOffset() {
    //write OFFSET ACQUISITION MODE command
    write8bit(0x10, 0x03, 0x03);
    //white until offset acquisition ends
-   while (getState() == NORMAL_MODE)
-      ;
+   while (getState() != NORMAL_MODE) {
+      delay(D7S_DELAY_IN_PROCESSING);
+   }
    //set that the event triggered is ended (no interrupt)
    _eventTriggered = 0;
    //return result of the selftest
@@ -305,17 +311,23 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    //write register address
    Wire.write(regH); //register address high
    Wire.write(regL); //register address low
+   //status of the Wire connection
+   uint8_t status = Wire.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
       Serial.print("[RE-START]: ");
       //send RE-START message
-      Serial.println(Wire.endTransmission(false));
-   #else
-      //send RE-START message
-      Wire.endTransmission(false);
+      Serial.println(status);
    #endif
 
+   //if the status != 0 there is an error
+   if (status != 0) {
+      //close the connection
+      Wire.endTransmission(true);
+      //retry
+      return read8bit(regH, regL);
+   }
    //request 1 byte
    Wire.requestFrom(D7S_ADDRESS, 1);
    //wait until the data is received
@@ -323,15 +335,14 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
       ;
    //read the data
    uint8_t data = Wire.read();
+   //status of the Wire connection
+   status = Wire.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
       Serial.print("[STOP]: ");
       //closing the connection (STOP message)
-      Serial.println(Wire.endTransmission(true));
-   #else
-      //closing the connection (STOP message)
-      Wire.endTransmission(true);
+      Serial.println(status);
    #endif
   
    //delay
@@ -359,16 +370,23 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //write register address
    Wire.write(regH); //register address high
    Wire.write(regL); //register address low
+   //status of the Wire connection
+   uint8_t status = Wire.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
       Serial.print("[RE-START]: ");
       //send RE-START message
-      Serial.println(Wire.endTransmission(false));
-   #else
-      //send RE-START message
-      Wire.endTransmission(false);
+      Serial.println(status);
    #endif
+
+   //if the status != 0 there is an error
+   if (status != 0) {
+      //close the connection
+      Wire.endTransmission(true);
+      //retry
+      return read16bit(regH, regL);
+   }
 
    //request 2 byte
    Wire.requestFrom(D7S_ADDRESS, 2);
@@ -378,15 +396,14 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //read the data
    uint8_t msb = Wire.read();
    uint8_t lsb = Wire.read();
+   //status of the Wire connection
+   status = Wire.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
       Serial.print("[STOP]: ");
       //closing the connection (STOP message)
-      Serial.println(Wire.endTransmission(true));
-   #else
-      //closing the connection (STOP message)
-      Wire.endTransmission(true);
+      Serial.println(status);
    #endif
 
    //delay
@@ -481,5 +498,8 @@ static void D7SClass::isr1() {
 
 //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
 static void D7SClass::isr2() {
-    D7S.int2();
+   D7S.int2();
 }
+
+//extern object
+D7SClass D7S;
