@@ -27,9 +27,6 @@ D7SClass::D7SClass() {
       _handlers[i] = NULL;
    }
 
-   //reset eventTriggered
-   _eventTriggered = 0;
-
    //DEBUG
    #ifdef DEBUG
       Serial.begin(9600);
@@ -41,23 +38,19 @@ D7SClass::D7SClass() {
 void D7SClass::begin() {
    //begin Wire
    Wire.begin();
-   //wait while the D7S is busy
-   while (getState() != NORMAL_MODE) {
-      delay(D7S_DELAY_IN_PROCESSING);
-   }
 }
 
 //--- STATUS ---
 //return the currect state
 d7s_status D7SClass::getState() {
    //read the STATE register at 0x1000
-   return read8bit(0x10, 0x00) & 0x6;
+   return read8bit(0x10, 0x00) & 0x07;
 }
 
 //return the currect state
 d7s_axis_state D7SClass::getAxisInUse() {
    //read the AXIS_STATE register at 0x1001
-   return read8bit(0x10, 0x01) & 0x3;
+   return read8bit(0x10, 0x01) & 0x03;
 }
 
 //--- SETTINGS ---
@@ -198,73 +191,60 @@ void D7SClass::clearAllData() {
 //--- INITIALIZATION ---
 //initialize the d7s (start the initial installation mode)
 void D7SClass::initialize() {
-   //set that the event is triggered (no interrupt)
-   _eventTriggered = 1;
    //write INITIAL INSTALLATION MODE command
    write8bit(0x10, 0x03, 0x02);
-   //white until intial installation ends
-   while (getState() != NORMAL_MODE) {
-      delay(D7S_DELAY_IN_PROCESSING);
-   }
-   _eventTriggered = 0;
 }
 
 //--- SELFTEST ---
 //start autodiagnostic and resturn the result (OK/ERROR)
-d7s_mode_status D7SClass::selftest() {
-   //set that the event is triggered (no interrupt)
-   _eventTriggered = 1;
+void D7SClass::selftest() {
    //write SELFTEST command
    write8bit(0x10, 0x03, 0x04);
-   //white until selftest ends
-   while (getState() != NORMAL_MODE) {
-      delay(D7S_DELAY_IN_PROCESSING);
-   }
-   //set that the event triggered is ended (no interrupt)
-   _eventTriggered = 0;
+}
+
+//return the result of self-diagnostic test (OK/ERROR)
+d7s_mode_status D7SClass::getSelftestResult() {
    //return result of the selftest
    return (read8bit(0x10, 0x02) & 0x07) >> 2;
 }
 
 //--- OFFSET ACQUISITION ---
 //start offset acquisition and return the rersult (OK/ERROR)
-d7s_mode_status D7SClass::acquireOffset() {
-   //set that the event is triggered (no interrupt)
-   _eventTriggered = 1;
+void D7SClass::acquireOffset() {
    //write OFFSET ACQUISITION MODE command
    write8bit(0x10, 0x03, 0x03);
-   //white until offset acquisition ends
-   while (getState() != NORMAL_MODE) {
-      delay(D7S_DELAY_IN_PROCESSING);
-   }
-   //set that the event triggered is ended (no interrupt)
-   _eventTriggered = 0;
-   //return result of the selftest
+}
+
+//return the result of offset acquisition test (OK/ERROR)
+d7s_mode_status D7SClass::getAcquireOffsetResult() {
+   //return result of the offset acquisition
    return (read8bit(0x10, 0x02) & 0x0F) >> 3;
 }
 
 //--- SHUTOFF/COLLAPSE EVENT ---
-//return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
-d7s_event_status D7SClass::getEvent() {
-   //read the EVENT register at 0x1002
-   uint8_t reg = read8bit(0x10, 0x02) & 0x03;
-   //if reg == 0x00 => NONE
-   if (reg == NONE) {
-      return NONE;
-   //if reg == 0x02 => COLLAPSE event occur
-   } else if (reg == COLLAPSE) {
-      return COLLAPSE;
-   //SHUTOFF event occur
-   } else { //if COLLAPSE and SHUTOFF happend simultaneusly it will be returned only SHUTOFF
-      return SHUTOFF;
-   }
+//reading this function reset the EVENT register and the conditions can represent themselves
+//return true if the collapse condition is met
+uint8_t D7SClass::isInCollapse() {
+   //return the collapse event bit from EVENT register
+   return (read8bit(0x10, 0x02) & 0x03) >> 1;
+}
+
+//return true if the shutoff condition is met
+uint8_t D7SClass::isInShutoff() {
+   //return the shutoff event bit from EVENT register
+   return read8bit(0x10, 0x02) & 0x01;
 }
 
 //--- EARTHQUAKE EVENT ---
 //return true if an earthquake is occuring
 uint8_t D7SClass::isEarthquakeOccuring() {
    //if D7S is in NORMAL MODE NOT IN STANBY (after the first 4 sec to initial delay) there is an earthquake
-   return read8bit(0x10, 0x00) == NORMAL_MODE_NOT_IN_STANBY;
+   return getState() == NORMAL_MODE_NOT_IN_STANBY;
+}
+
+//--- READY STATE ---
+uint8_t D7SClass::isReady() {
+   return getState() == NORMAL_MODE;
 }
 
 //--- INTERRUPT ---
@@ -346,7 +326,7 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    #endif
   
    //delay
-   delay(D7S_WIRE_DELAY);
+   delay(D7S_DELAY);
 
    //DEBUG
    #ifdef DEBUG
@@ -407,7 +387,7 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    #endif
 
    //delay
-   delay(D7S_WIRE_DELAY);
+   delay(D7S_DELAY);
 
    //DEBUG
    #ifdef DEBUG
@@ -445,7 +425,7 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    #endif
 
    //delay
-   delay(D7S_WIRE_DELAY);
+   delay(D7S_DELAY);
 
    //DEBUG
    #ifdef DEBUG
@@ -457,7 +437,7 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
 //handle the INT1 events
 void D7SClass::int1() {
    //check what event triggered the interrupt
-   if (getEvent() == SHUTOFF) {
+   if (isInShutoff()) {
       //if the handler is defined
       if (_handlers[2]) {
          _handlers[2]();
@@ -472,12 +452,8 @@ void D7SClass::int1() {
 
 //handle the INT2 events
 void D7SClass::int2() {
-   //if the event is triggered by the user no interrupt
-   if (_eventTriggered) {
-      return;
-   }
    //check what in what state the D7S is
-   if (getState() == NORMAL_MODE_NOT_IN_STANBY) { //earthquake started
+   if (isEarthquakeOccuring()) { //earthquake started
       //if the handler is defined
       if (_handlers[0]) {
          _handlers[0]();

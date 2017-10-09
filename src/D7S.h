@@ -28,8 +28,7 @@
 #define D7S_ADDRESS 0x55 //D7S address on the I2C bus
 
 //DELAY
-#define D7S_WIRE_DELAY 50 //delay in ms to prevent error in trasmission
-#define D7S_DELAY_IN_PROCESSING 200 //delay in ms to wait when switching mode to prevent aggressive polling
+#define D7S_DELAY 50 //delay in ms to wait when reading/writing to prevent aggressive polling
 
 //--- DEBUG ----
 //comment this line to disable all debug information
@@ -70,13 +69,6 @@ typedef enum d7s_threshold {
 typedef enum d7s_mode_status {
    OK = 0,
    ERROR = 1
-};
-
-//event status for collapse/shutoff
-typedef enum d7s_event_status {
-   NONE = 0x00,
-   SHUTOFF = 0x01,
-   COLLAPSE = 0x02,
 };
 
 //events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
@@ -132,16 +124,24 @@ class D7SClass {
       void initialize(); //initialize the d7s (start the initial installation mode)
 
       //--- SELFTEST ---
-      d7s_mode_status selftest(); //start autodiagnostic and resturn the result (OK/ERROR)
+      void selftest(); //trigger self-diagnostic test
+      d7s_mode_status getSelftestResult(); //return the result of self-diagnostic test (OK/ERROR)
 
       //--- OFFSET ACQUISITION ---
-      d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
+      //d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
+      void acquireOffset(); //trigger offset acquisition
+      d7s_mode_status getAcquireOffsetResult(); //return the result of offset acquisition test (OK/ERROR)
 
       //--- SHUTOFF/COLLAPSE EVENT ---
-      d7s_event_status getEvent(); //return the status of the shutoff/collapse condition (NONE/SHUTOFF/COLLAPSE)
+      //reading this function reset the EVENT register and the conditions can represent themselves
+      uint8_t isInCollapse(); //return true if the collapse condition is met
+      uint8_t isInShutoff(); //return true if the shutoff condition is met
 
       //--- EARTHQUAKE EVENT ---
       uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
+
+      //--- READY STATE ---
+      uint8_t isReady();
 
       //--- INTERRUPT ---
       void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
@@ -151,9 +151,6 @@ class D7SClass {
    private:
       //handler array (it cointaint the pointer to the user defined array)
       void (*_handlers[4]) ();
-
-      //selftest/offset acquisition or initial installation triggered
-      uint8_t _eventTriggered;
 
       //--- READ ---
       uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register
