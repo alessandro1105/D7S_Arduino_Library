@@ -222,17 +222,29 @@ d7s_mode_status D7SClass::getAcquireOffsetResult() {
 }
 
 //--- SHUTOFF/COLLAPSE EVENT ---
-//reading this function reset the EVENT register and the conditions can represent themselves
-//return true if the collapse condition is met
+//after each earthquakes it's important to reset the events calling resetEvents() to prevent polluting the new data with the old one
+//return true if the collapse condition is met (it's the sencond bit of _events)
 uint8_t D7SClass::isInCollapse() {
-   //return the collapse event bit from EVENT register
-   return (read8bit(0x10, 0x02) & 0x03) >> 1;
+   //updating the _events variable
+   readEvents();
+   //return the second bit of _events
+   return (_events & 0x02) >> 1;
 }
 
-//return true if the shutoff condition is met
+//return true if the shutoff condition is met (it's the first bit of _events)
 uint8_t D7SClass::isInShutoff() {
-   //return the shutoff event bit from EVENT register
-   return read8bit(0x10, 0x02) & 0x01;
+   //updating the _events variable
+   readEvents();
+   //return the second bit of _events
+   return _events & 0x01;
+}
+
+//reset shutoff/collapse events
+void D7SClass::resetEvents() {
+   //reset the EVENT register (read to zero-ing it)
+   read8bit(0x10, 0x02);
+   //reset the events variable
+   _events = 0;
 }
 
 //--- EARTHQUAKE EVENT ---
@@ -291,6 +303,8 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    //write register address
    Wire.write(regH); //register address high
    Wire.write(regL); //register address low
+   //delay to prevent freezing
+   delay(10);
    //status of the Wire connection
    uint8_t status = Wire.endTransmission(false);
 
@@ -321,18 +335,10 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.print("[STOP]: ");
-      //closing the connection (STOP message)
       Serial.println(status);
-   #endif
-  
-   //delay
-   delay(D7S_DELAY);
-
-   //DEBUG
-   #ifdef DEBUG
       Serial.println("--- read8bit ---");
    #endif
-
+  
    //return the data
    return data;
 }
@@ -350,6 +356,8 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //write register address
    Wire.write(regH); //register address high
    Wire.write(regL); //register address low
+   //delay to prevent freezing
+   delay(10);
    //status of the Wire connection
    uint8_t status = Wire.endTransmission(false);
 
@@ -382,15 +390,7 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.print("[STOP]: ");
-      //closing the connection (STOP message)
       Serial.println(status);
-   #endif
-
-   //delay
-   delay(D7S_DELAY);
-
-   //DEBUG
-   #ifdef DEBUG
       Serial.println("--- read16bit ---");
    #endif
 
@@ -413,24 +413,25 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    Wire.write(regL); //register address low
    //write data
    Wire.write(val);
+   //closing the connection (STOP message)
+   uint8_t status = Wire.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
       Serial.print("[STOP]: ");
       //closing the connection (STOP message)
-      Serial.println(Wire.endTransmission(true));
-   #else
-      //closing the connection (STOP message)
-      Wire.endTransmission(true);
-   #endif
-
-   //delay
-   delay(D7S_DELAY);
-
-   //DEBUG
-   #ifdef DEBUG
+      Serial.println(status);
       Serial.println("--- write8bit ---");
    #endif
+}
+
+//--- READ EVENTS ---
+//read the event (SHUTOFF/COLLAPSE) from the EVENT register
+void D7SClass::readEvents() {
+   //read the EVENT register at 0x1002 and obtaining only the first two bits
+   uint8_t events = read8bit(0x10, 0x02) & 0x03;
+   //updating the _events variable
+   _events |= events;
 }
 
 //--- INTERRUPT HANDLER ---

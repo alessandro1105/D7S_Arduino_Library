@@ -27,9 +27,6 @@
 //--- ADDRESS ---
 #define D7S_ADDRESS 0x55 //D7S address on the I2C bus
 
-//DELAY
-#define D7S_DELAY 50 //delay in ms to wait when reading/writing to prevent aggressive polling
-
 //--- DEBUG ----
 //comment this line to disable all debug information
 //#define DEBUG
@@ -128,14 +125,14 @@ class D7SClass {
       d7s_mode_status getSelftestResult(); //return the result of self-diagnostic test (OK/ERROR)
 
       //--- OFFSET ACQUISITION ---
-      //d7s_mode_status acquireOffset(); //start offset acquisition and return the rersult (OK/ERROR)
       void acquireOffset(); //trigger offset acquisition
       d7s_mode_status getAcquireOffsetResult(); //return the result of offset acquisition test (OK/ERROR)
 
       //--- SHUTOFF/COLLAPSE EVENT ---
-      //reading this function reset the EVENT register and the conditions can represent themselves
-      uint8_t isInCollapse(); //return true if the collapse condition is met
-      uint8_t isInShutoff(); //return true if the shutoff condition is met
+      //after each earthquakes it's important to reset the events calling resetEvents() to prevent polluting the new data with the old one
+      uint8_t isInCollapse(); //return true if the collapse condition is met (it's the sencond bit of _events)
+      uint8_t isInShutoff(); //return true if the shutoff condition is met (it's the first bit of _events)
+      void resetEvents(); //reset shutoff/collapse events
 
       //--- EARTHQUAKE EVENT ---
       uint8_t isEarthquakeOccuring(); //return true if an earthquake is occuring
@@ -152,12 +149,18 @@ class D7SClass {
       //handler array (it cointaint the pointer to the user defined array)
       void (*_handlers[4]) ();
 
+      //variable to track event (first bit => SHUTOFF, second bit => COLLAPSE)
+      uint8_t _events;
+
       //--- READ ---
       uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register
       uint16_t read16bit(uint8_t regH, uint8_t regL); //read 16 bit from the specified register
 
       //--- WRITE ---
       void write8bit(uint8_t regH, uint8_t regL, uint8_t val); //write 8 bit to the register specified
+
+      //--- READ EVENTS ---
+      void readEvents(); //read the event (SHUTOFF/COLLAPSE) from the EVENT register
 
       //--- EVENT HANDLER ---
       void int1(); //handle the INT1 events
