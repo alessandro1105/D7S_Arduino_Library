@@ -262,6 +262,45 @@ uint8_t D7SClass::isReady() {
    return getState() == NORMAL_MODE;
 }
 
+//--- INTERRUPT ---
+//enable interrupt INT1 on specified pin
+void D7SClass::enableInterruptINT1(uint8_t pin = D7S_INT1_PIN) {
+   //enable pull up resistor
+   pinMode(pin, INPUT_PULLUP);
+   //attach interrupt
+   attachInterrupt(digitalPinToInterrupt(pin), isr1, FALLING);
+}
+
+//enable interrupt INT2 on specified pin
+void D7SClass::enableInterruptINT2(uint8_t pin = D7S_INT2_PIN) {
+   //enable pull up resistor
+   pinMode(pin, INPUT_PULLUP);
+   //attach interrupt
+   attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
+}
+
+//start interrupt handling
+void D7SClass::startInterruptHandling() {
+   //enabling interrupt handling
+   _interruptEnabled = 1;
+}
+
+//stop interrupt handling
+void D7SClass::stopInterruptHandling() {
+   //disabling interrupt handling
+   _interruptEnabled = 0;
+}
+
+//assing the handler to the specific event
+void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()) {
+   //check if event is in bound (it's the index to the handlers array)
+   if (event < 0 || event > 3) {
+      return;
+   }
+   //copy the pointer to the array
+   _handlers[event] = handler;
+}
+
 
 //----------------------- PRIVATE INTERFACE -----------------------
 
@@ -410,6 +449,55 @@ void D7SClass::readEvents() {
    _events |= events;
 }
 
+//--- INTERRUPT HANDLER ---
+//handle the INT1 events
+void D7SClass::int1() {
+   //if the interrupt handling is enabled
+   if (_interruptEnabled) {
+      //check what event triggered the interrupt
+      if (isInShutoff()) {
+         //if the handler is defined
+         if (_handlers[2]) {
+            _handlers[2](); //SHUTOFF_EVENT EVENT
+         }
+      } else {
+         //if the handler is defined
+         if (_handlers[3]) {
+            _handlers[3](); //COLLAPSE_EVENT EVENT
+         }
+      }
+   }
+}
+
+//handle the INT2 events
+void D7SClass::int2() {
+   //if the interrupt handling is enabled
+   if (_interruptEnabled) {
+      //check what in what state the D7S is
+      if (isEarthquakeOccuring()) { //earthquake started
+         //if the handler is defined
+         if (_handlers[0]) {
+            _handlers[0](); //START_EARTHQUAKE EVENT
+         }
+      } else { //earthquake ended
+         //if the handler is defined
+         if (_handlers[1]) {
+            ((void (*)(float, float, float)) _handlers[1])(getLastestSI(0), getLastestPGA(0), getLastestTemperature(0)); //END_EARTHQUAKE EVENT
+         }
+      }
+   }
+}
+
+//--- ISR HANDLER ---
+//it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
+static void D7SClass::isr1() {
+   D7S.int1();
+}
+
+//it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
+static void D7SClass::isr2() {
+   D7S.int2();
+}
 
 //extern object
 D7SClass D7S;

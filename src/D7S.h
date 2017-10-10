@@ -68,6 +68,14 @@ typedef enum d7s_mode_status {
    ERROR = 1
 };
 
+//events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
+typedef enum d7s_interrupt_event {
+   START_EARTHQUAKE = 0, //INT 2
+   END_EARTHQUAKE = 1, //INT 2
+   SHUTOFF_EVENT = 2, //INT 1
+   COLLAPSE_EVENT = 3 //INT 1
+};
+
 //class D7S
 class D7SClass {
 
@@ -131,12 +139,22 @@ class D7SClass {
       //--- READY STATE ---
       uint8_t isReady();
 
+      //--- INTERRUPT ---
+      void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
+      void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
+      void startInterruptHandling(); //start interrupt handling
+      void stopInterruptHandling(); //stop interrupt handling
+      void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
+
    private:
       //handler array (it cointaint the pointer to the user defined array)
       void (*_handlers[4]) ();
 
       //variable to track event (first bit => SHUTOFF, second bit => COLLAPSE)
       uint8_t _events;
+
+      //enable interrupt handling
+      uint8_t _interruptEnabled;
 
       //--- READ ---
       uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register
@@ -147,6 +165,14 @@ class D7SClass {
 
       //--- READ EVENTS ---
       void readEvents(); //read the event (SHUTOFF/COLLAPSE) from the EVENT register
+
+      //--- EVENT HANDLER ---
+      void int1(); //handle the INT1 events
+      void int2(); //handle the INT2 events
+
+      //--- ISR HANDLER ---
+      static void isr1(); //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
+      static void isr2(); //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
 
 };
 
