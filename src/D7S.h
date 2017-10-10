@@ -143,7 +143,9 @@ class D7SClass {
       //--- INTERRUPT ---
       void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
       void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
-      void addEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
+      void startInterruptHandling(); //start interrupt handling
+      void stopInterruptHandling(); //stop interrupt handling
+      void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
 
    private:
       //handler array (it cointaint the pointer to the user defined array)
@@ -151,6 +153,9 @@ class D7SClass {
 
       //variable to track event (first bit => SHUTOFF, second bit => COLLAPSE)
       uint8_t _events;
+
+      //enable interrupt handling
+      uint8_t _interruptEnabled;
 
       //--- READ ---
       uint8_t read8bit(uint8_t regH, uint8_t regL); //read 8 bit from the specified register

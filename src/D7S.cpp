@@ -27,6 +27,12 @@ D7SClass::D7SClass() {
       _handlers[i] = NULL;
    }
 
+   //reset events variable
+   _events = 0;
+
+   //reset interrupt enabled varible
+   _interruptEnabled = 0;
+
    //DEBUG
    #ifdef DEBUG
       Serial.begin(9600);
@@ -276,8 +282,20 @@ void D7SClass::enableInterruptINT2(uint8_t pin = D7S_INT2_PIN) {
    attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
 }
 
+//start interrupt handling
+void D7SClass::startInterruptHandling() {
+   //enabling interrupt handling
+   _interruptEnabled = 1;
+}
+
+//stop interrupt handling
+void D7SClass::stopInterruptHandling() {
+   //disabling interrupt handling
+   _interruptEnabled = 0;
+}
+
 //assing the handler to the specific event
-void D7SClass::addEventHandler(d7s_interrupt_event event, void (*handler) ()) {
+void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()) {
    //check if event is in bound (it's the index to the handlers array)
    if (event < 0 || event > 3) {
       return;
@@ -437,32 +455,38 @@ void D7SClass::readEvents() {
 //--- INTERRUPT HANDLER ---
 //handle the INT1 events
 void D7SClass::int1() {
-   //check what event triggered the interrupt
-   if (isInShutoff()) {
-      //if the handler is defined
-      if (_handlers[2]) {
-         _handlers[2]();
-      }
-   } else {
-      //if the handler is defined
-      if (_handlers[3]) {
-         _handlers[3]();
+   //if the interrupt handling is enabled
+   if (_interruptEnabled) {
+      //check what event triggered the interrupt
+      if (isInShutoff()) {
+         //if the handler is defined
+         if (_handlers[2]) {
+            _handlers[2](); //SHUTOFF_EVENT EVENT
+         }
+      } else {
+         //if the handler is defined
+         if (_handlers[3]) {
+            _handlers[3](); //COLLAPSE_EVENT EVENT
+         }
       }
    }
 }
 
 //handle the INT2 events
 void D7SClass::int2() {
-   //check what in what state the D7S is
-   if (isEarthquakeOccuring()) { //earthquake started
-      //if the handler is defined
-      if (_handlers[0]) {
-         _handlers[0]();
-      }
-   } else { //earthquake ended
-      //if the handler is defined
-      if (_handlers[1]) {
-         _handlers[1]();
+   //if the interrupt handling is enabled
+   if (_interruptEnabled) {
+      //check what in what state the D7S is
+      if (isEarthquakeOccuring()) { //earthquake started
+         //if the handler is defined
+         if (_handlers[0]) {
+            _handlers[0](); //START_EARTHQUAKE EVENT
+         }
+      } else { //earthquake ended
+         //if the handler is defined
+         if (_handlers[1]) {
+            ((void (*)(float, float, float)) _handlers[1])(getLastestSI(0), getLastestPGA(0), getLastestTemperature(0)); //END_EARTHQUAKE EVENT
+         }
       }
    }
 }
