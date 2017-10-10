@@ -20,17 +20,26 @@
 float oldSI = 0;
 float oldPGA = 0;
 
-//function to handle collapse event
-void handleCollapse() {
-  //put here the code to handle the collapse event
-  Serial.println("COLLAPSE!");
-}
+//flag variables to handle collapse/shutoff only one time during an earthquake
+bool shutoffHandled = false;
+bool collapseHandled = false;
 
 //function to handle shutoff event
 void handleShutoff() {
   //put here the code to handle the shutoff event
-  Serial.println("SHUTOFF!");
+  Serial.println("-------------------- SHUTOFF! --------------------");
+  Serial.println("Shutting down all device!");
+  //stop all device
+  while (1)
+    ;
 }
+
+//function to handle collapse event
+void handleCollapse() {
+  //put here the code to handle the collapse event
+  Serial.println("-------------------- COLLAPSE! --------------------");
+}
+
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -43,6 +52,11 @@ void setup() {
   Serial.print("Starting D7S communications (it may take some time)...");
   //start D7S connection
   D7S.begin();
+  //wait until the D7S is ready
+  while (!D7S.isReady()) {
+    Serial.print(".");
+    delay(500);
+  }
   Serial.println("STARTED");
 
   //--- SETTINGS ---
@@ -56,11 +70,22 @@ void setup() {
   Serial.print("Initializing...");
   //start the initial installation procedure
   D7S.initialize();
-  //finished
+  //wait until the D7S is ready (the initializing process is ended)
+  while (!D7S.isReady()) {
+    Serial.print(".");
+    delay(500);
+  }
   Serial.println("INITIALIZED!");
 
-  //--- DELAY ---
-  delay(1000);
+  //--- CHECKING FOR PREVIUS COLLAPSE ---
+  //check if there there was a collapse (if this is the first time the D7S is put in place the installation data may be wrong)
+  if (D7S.isInCollapse()) {
+    collapseHandler();
+  }
+
+  //--- RESETTING EVENTS ---
+  //reset the events shutoff/collapse memorized into the D7S
+  D7S.resetEvents();
 
   //--- READY TO GO ---
   Serial.println("\nListening for earthquakes!");
@@ -72,18 +97,18 @@ void loop() {
 	//checking if there is an earthquake occuring right now
   if (D7S.isEarthquakeOccuring()) {
 
-    //get the current event
-    byte event = D7S.getEvent();
-
-    //if there is a collapse
-    if (event == COLLAPSE) {
-      //handle collapse event
-      handleCollapse();
-
-    //if there is a shutoff
-    } else if (event == SHUTOFF) {
-      //handle shutoff event
+    //check if the shutoff event has been handled and if the shutoff condition is met
+    //the call of D7S.isInShutoff() is executed after to prevent useless I2C call
+    if (!shutoffHandled && D7S.isInShutoff()) {
       handleShutoff();
+      shutoffHandled = true;
+    }
+
+    //check if the shutoff event has been handled and if the shutoff condition is met
+    //the call of D7S.isInShutoff() is executed after to prevent useless I2C call
+    if (!collapseHandled && D7S.isInCollapse()) {
+      handleCollapse();
+      collapseHandled = true;
     }
 
     //print information about the current earthquake
@@ -106,8 +131,13 @@ void loop() {
     }
     
   } else {
-    //reset the old earthquake value
+    //reset the old earthquake data
     oldPGA = 0;
     oldSI = 0;
+    //reset the flag of the handled events
+    shutoffHandled = false;
+    collapseHandled = false;
+    //reset D7S events
+    D7S.resetEvents();
   }
 }

@@ -34,28 +34,25 @@ void setup() {
   }
   Serial.println("STARTED\n");
 
-  //--- LASTEST DATA ---
-  Serial.println("--- LASTEST EARTHQUAKES MEASURED ---\n");
-  //print the lastest 5 earthquakes registered with all data
-  for (int i = 0; i < 5; i++) { //the index must be from 0 to 4 (5 earthquakes in total)
-  	Serial.print("Earthquake n. ");
-  	Serial.println(i+1);
-
-  	//getting the lastest SI at position i
-  	Serial.print("\tSI: ");
-  	Serial.print(D7S.getLastestSI(i));
-  	Serial.println(" [m/s]");
-
-  	//getting the lastest PGA at position i
-  	Serial.print("\tPGA (Peak Ground Acceleration): ");
-  	Serial.print(D7S.getLastestPGA(i));
-  	Serial.println(" [m/s^2]");
-
-  	//getting the temperature at which the earthquake has occured
-  	Serial.print("\tTemperature: ");
-  	Serial.print(D7S.getLastestTemperature(i));
-  	Serial.println(" [°C]\n");
+  //making a selftest to check the D7S sensor
+  Serial.print("Starting selftest...");
+  D7S.selftest();
+  //wait until the D7S selftest is ended
+  while (!D7S.isReady()) {
+    Serial.print(".");
+    delay(500);
   }
+  Serial.println("FINSHED\n");
+
+  Serial.print("The result of the selftest is: ");
+
+  //checking the result
+  if (D7S.getSelftestResult() == OK) {
+    Serial.println("SUCCESS!");
+  } else {
+    Serial.println("ERROR!");
+  }
+
 }
 
 void loop() {

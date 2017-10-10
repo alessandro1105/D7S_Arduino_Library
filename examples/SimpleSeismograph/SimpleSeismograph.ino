@@ -27,6 +27,11 @@ void setup() {
   Serial.print("Starting D7S communications (it may take some time)...");
   //start D7S connection
   D7S.begin();
+  //wait until the D7S is ready
+  while (!D7S.isReady()) {
+    Serial.print(".");
+    delay(500);
+  }
   Serial.println("STARTED");
 
   //--- SETTINGS ---
@@ -40,11 +45,12 @@ void setup() {
   Serial.print("Initializing...");
   //start the initial installation procedure
   D7S.initialize();
-  //finished
+  //wait until the D7S is ready (the initializing process is ended)
+  while (!D7S.isReady()) {
+    Serial.print(".");
+    delay(500);
+  }
   Serial.println("INITIALIZED!");
-
-  //--- DELAY ---
-  delay(1000);
 
   //--- READY TO GO ---
   Serial.println("\nListening for earthquakes!");
@@ -54,20 +60,16 @@ void setup() {
 void loop() {
 	//checking if there is an earthquake occuring right now
   if (D7S.isEarthquakeOccuring()) {
-    //yeah there is an earthquake
-    Serial.println("Earthquake!");
-    //get the instantaneus data every 500ms
-    while (D7S.isEarthquakeOccuring()) {
-      Serial.print("\tInstantaneus SI: ");
-      Serial.print(D7S.getInstantaneusSI());
-      Serial.println(" [m/s]");
+    Serial.print("\tInstantaneus SI: ");
+    Serial.print(D7S.getInstantaneusSI());
+    Serial.println(" [m/s]");
 
-      //getting the lastest PGA at position i
-      Serial.print("\tInstantaneus PGA (Peak Ground Acceleration): ");
-      Serial.print(D7S.getInstantaneusPGA());
-      Serial.println(" [m/s^2]\n");
-
-      delay(500);
-    }
+    //getting the lastest PGA at position i
+    Serial.print("\tInstantaneus PGA (Peak Ground Acceleration): ");
+    Serial.print(D7S.getInstantaneusPGA());
+    Serial.println(" [m/s^2]\n");
   }
+
+  //wait 500ms before checking again
+  delay(500);
 }

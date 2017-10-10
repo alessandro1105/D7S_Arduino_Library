@@ -35,25 +35,25 @@ void setup() {
   Serial.println("STARTED\n");
 
   //--- LASTEST DATA ---
-  Serial.println("--- LASTEST EARTHQUAKES MEASURED ---\n");
+  Serial.println("--- RANKED EARTHQUAKES BY SI ---\n");
   //print the lastest 5 earthquakes registered with all data
   for (int i = 0; i < 5; i++) { //the index must be from 0 to 4 (5 earthquakes in total)
-  	Serial.print("Earthquake n. ");
+  	Serial.print("Earthquake in postion ");
   	Serial.println(i+1);
 
   	//getting the lastest SI at position i
   	Serial.print("\tSI: ");
-  	Serial.print(D7S.getLastestSI(i));
+  	Serial.print(D7S.getRankedSI(i));
   	Serial.println(" [m/s]");
 
   	//getting the lastest PGA at position i
   	Serial.print("\tPGA (Peak Ground Acceleration): ");
-  	Serial.print(D7S.getLastestPGA(i));
+  	Serial.print(D7S.getRankedPGA(i));
   	Serial.println(" [m/s^2]");
 
   	//getting the temperature at which the earthquake has occured
   	Serial.print("\tTemperature: ");
-  	Serial.print(D7S.getLastestTemperature(i));
+  	Serial.print(D7S.getRankedTemperature(i));
   	Serial.println(" [°C]\n");
   }
 }

@@ -27,35 +27,33 @@ void setup() {
   Serial.print("Starting D7S communications (it may take some time)...");
   //start D7S connection
   D7S.begin();
-  //wait until the D7S is ready
-  while (!D7S.isReady()) {
-    Serial.print(".");
-    delay(500);
-  }
   Serial.println("STARTED\n");
 
-  //--- LASTEST DATA ---
-  Serial.println("--- LASTEST EARTHQUAKES MEASURED ---\n");
-  //print the lastest 5 earthquakes registered with all data
-  for (int i = 0; i < 5; i++) { //the index must be from 0 to 4 (5 earthquakes in total)
-  	Serial.print("Earthquake n. ");
-  	Serial.println(i+1);
+  //clearing earthquake measured data
+  Serial.print("Clearing earthquake data...");
+  D7S.clearEarthquakeData();
+  Serial.println("CLEARED!\n");
 
-  	//getting the lastest SI at position i
-  	Serial.print("\tSI: ");
-  	Serial.print(D7S.getLastestSI(i));
-  	Serial.println(" [m/s]");
+  //clearing installation data
+  Serial.print("Clearing installation data...");
+  D7S.clearInstallationData();
+  Serial.println("CLEARED!\n");
 
-  	//getting the lastest PGA at position i
-  	Serial.print("\tPGA (Peak Ground Acceleration): ");
-  	Serial.print(D7S.getLastestPGA(i));
-  	Serial.println(" [m/s^2]");
+  //clearing lastest offset data
+  Serial.print("Clearing lastest offset data...");
+  D7S.clearLastestOffsetData();
+  Serial.println("CLEARED!\n");
 
-  	//getting the temperature at which the earthquake has occured
-  	Serial.print("\tTemperature: ");
-  	Serial.print(D7S.getLastestTemperature(i));
-  	Serial.println(" [°C]\n");
-  }
+  //clearing selftest data
+  Serial.print("Clearing Earthquake data...");
+  D7S.clearSelftestData();
+  Serial.println("CLEARED!\n");
+
+  //clearing all data
+  Serial.print("Clearing all data...");
+  D7S.clearAllData();
+  Serial.println("CLEARED!\n");
+
 }
 
 void loop() {
