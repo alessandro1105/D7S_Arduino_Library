@@ -80,7 +80,7 @@ void setup() {
   //--- CHECKING FOR PREVIUS COLLAPSE ---
   //check if there there was a collapse (if this is the first time the D7S is put in place the installation data may be wrong)
   if (D7S.isInCollapse()) {
-    collapseHandler();
+    handleCollapse();
   }
 
   //--- RESETTING EVENTS ---
