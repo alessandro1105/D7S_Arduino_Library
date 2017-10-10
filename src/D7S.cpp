@@ -452,6 +452,8 @@ void D7SClass::readEvents() {
 //--- INTERRUPT HANDLER ---
 //handle the INT1 events
 void D7SClass::int1() {
+   //enabling interrupts
+   interrupts();
    //if the interrupt handling is enabled
    if (_interruptEnabled) {
       //check what event triggered the interrupt
@@ -471,6 +473,8 @@ void D7SClass::int1() {
 
 //handle the INT2 events
 void D7SClass::int2() {
+   //enabling interrupts
+   interrupts();
    //if the interrupt handling is enabled
    if (_interruptEnabled) {
       //check what in what state the D7S is
