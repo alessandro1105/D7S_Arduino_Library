@@ -41,17 +41,17 @@ void setup() {
   	Serial.print("Earthquake n. ");
   	Serial.println(i+1);
 
-  	//getting the lastest SI at position i
+  	//getting the lastest SI at index i
   	Serial.print("\tSI: ");
   	Serial.print(D7S.getLastestSI(i));
   	Serial.println(" [m/s]");
 
-  	//getting the lastest PGA at position i
+  	//getting the lastest PGA at index i
   	Serial.print("\tPGA (Peak Ground Acceleration): ");
   	Serial.print(D7S.getLastestPGA(i));
   	Serial.println(" [m/s^2]");
 
-  	//getting the temperature at which the earthquake has occured
+  	//getting the temperature at which the earthquake at index i has occured
   	Serial.print("\tTemperature: ");
   	Serial.print(D7S.getLastestTemperature(i));
   	Serial.println(" [°C]\n");

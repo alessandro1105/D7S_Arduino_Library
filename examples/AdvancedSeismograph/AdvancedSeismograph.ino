@@ -116,11 +116,12 @@ void loop() {
     float currentPGA = D7S.getInstantaneusPGA();
 
     if (currentSI > oldSI || currentPGA > oldPGA) {
+      //getting instantaneus SI
       Serial.print("\tInstantaneus SI: ");
       Serial.print(currentSI);
       Serial.println(" [m/s]");
 
-      //getting the lastest PGA at position i
+      //getting instantaneus PGA
       Serial.print("\tInstantaneus PGA (Peak Ground Acceleration): ");
       Serial.print(currentPGA);
       Serial.println(" [m/s^2]\n");

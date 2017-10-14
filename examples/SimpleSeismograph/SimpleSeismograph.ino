@@ -60,11 +60,12 @@ void setup() {
 void loop() {
 	//checking if there is an earthquake occuring right now
   if (D7S.isEarthquakeOccuring()) {
+    //getting instantaneus SI
     Serial.print("\tInstantaneus SI: ");
     Serial.print(D7S.getInstantaneusSI());
     Serial.println(" [m/s]");
 
-    //getting the lastest PGA at position i
+    //getting instantaneus PGA
     Serial.print("\tInstantaneus PGA (Peak Ground Acceleration): ");
     Serial.print(D7S.getInstantaneusPGA());
     Serial.println(" [m/s^2]\n");

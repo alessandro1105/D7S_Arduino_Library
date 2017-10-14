@@ -30,24 +30,26 @@ float oldPGA = 0;
 void startEarthquakeHandler() {
   Serial.println("-------------------- EARTHQUAKE STARTED! --------------------\n");
 }
+
 //function to handle the end of an earthquake
 void endEarthquakeHandler(float si, float pga, float temperature) {
   Serial.println("-------------------- EARTHQUAKE ENDED! --------------------");
-  //getting the lastest SI at position i
+  //printing the SI
   Serial.print("\tSI: ");
   Serial.print(si);
   Serial.println(" [m/s]");
 
-  //getting the lastest PGA at position i
+  //printing the PGA
   Serial.print("\tPGA (Peak Ground Acceleration): ");
   Serial.print(pga);
   Serial.println(" [m/s^2]");
 
-  //getting the temperature at which the earthquake has occured
+  //printing the temperature at which the earthquake has occured
   Serial.print("\tTemperature: ");
   Serial.print(temperature);
   Serial.println(" [°C]\n");
 }
+
 //function to handle shutoff event
 void shutoffHandler() {
   //put here the code to handle the shutoff event
@@ -57,6 +59,7 @@ void shutoffHandler() {
   while (1)
     ;
 }
+
 //function to handle collapse event
 void collapseHandler() {
   //put here the code to handle the collapse event
