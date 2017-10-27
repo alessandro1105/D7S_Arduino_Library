@@ -1,5 +1,5 @@
 /*
-   Copyright 2016 Alessandro Pasqualini
+   Copyright 2017 Alessandro Pasqualini
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -9,9 +9,14 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-   @author         Alessandro Pasqualini <alessandro.pasqualini.1105@gmail.com>
-   @url            https://github.com/alessandro1105
+
+   @author    Alessandro Pasqualini <alessandro.pasqualini.1105@gmail.com>
+   @url       https://github.com/alessandro1105
+
+   This project has been developed with the contribution of Futura Elettronica.
+   - http://www.futurashop.it
+   - http://www.elettronicain.it
+   - https://www.open-electronics.org
 */
 
 #include <Arduino.h>

@@ -10,11 +10,15 @@ Just download the lastest realease and place it your Arduino IDE library folder.
 
 The D7S sensor must be connected to the I2C bus.
 
-On most Arduino boards, SDA (data line) is on analog input pin 4, and SCL (clock line) is on analog input pin 5. On the Arduino Mega, SDA is digital pin 20 and SCL is 21. (See [https://www.arduino.cc/en/Guide/Libraries](https://www.arduino.cc/en/Reference/Wire)
+On most Arduino boards, SDA (data line) is on analog input pin 4, and SCL (clock line) is on analog input pin 5. On the Arduino Mega, SDA is digital pin 20 and SCL is 21. (See [https://www.arduino.cc/en/Guide/Libraries](https://www.arduino.cc/en/Reference/Wire))
 
 ## Authors
 
 * **Alessandro Pasqualini** - [alessandro1105](https://github.com/alessandro1105)
+
+## Contributors
+
+This project has been developed with the contribution of [Futura Elettronica](http://www.futurashop.it), [Elettronica In](http://www.elettronicain.it), [Open Electronics](https://www.open-electronics.org).
 
 ## License
 
