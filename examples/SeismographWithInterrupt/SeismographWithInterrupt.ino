@@ -18,12 +18,8 @@
 
 //interrupt pin INT1 of D7S attached to pin 2 of Arduino
 #define INT1_PIN 2
-//interrupt pin INT2 of D7S attached to pin 23of Arduino
+//interrupt pin INT2 of D7S attached to pin 3 of Arduino
 #define INT2_PIN 3
-
-//old earthquake data
-float oldSI = 0;
-float oldPGA = 0;
 
 //--- EVENT HANDLERS --
 //function to handle the start of an earthquake
@@ -48,6 +44,9 @@ void endEarthquakeHandler(float si, float pga, float temperature) {
   Serial.print("\tTemperature: ");
   Serial.print(temperature);
   Serial.println(" [°C]\n");
+
+  //reset earthquake events
+  D7S.resetEvents();
 }
 
 //function to handle shutoff event
@@ -101,7 +100,7 @@ void setup() {
   D7S.registerInterruptEventHandler(SHUTOFF_EVENT, &shutoffHandler); //SHUTOFF_EVENT event handler
   D7S.registerInterruptEventHandler(COLLAPSE_EVENT, &collapseHandler); //COLLAPSE_EVENT event handler
 
-  //--- INITIALIZZAZION ---
+  //--- INITIALIZZATION ---
   Serial.println("Initializing the D7S sensor in 2 seconds. Please keep it steady during the initializing process.");
   delay(2000);
   Serial.print("Initializing...");

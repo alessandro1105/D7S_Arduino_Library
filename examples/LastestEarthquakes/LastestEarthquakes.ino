@@ -37,7 +37,7 @@ void setup() {
   //--- LASTEST DATA ---
   Serial.println("--- LASTEST EARTHQUAKES MEASURED ---\n");
   //print the lastest 5 earthquakes registered with all data
-  for (int i = 0; i < 5; i++) { //the index must be from 0 to 4 (5 earthquakes in total)
+  for (int i = 0; i < 5; i++) { //the index must be from 0 to 4 (5 earthquakes total)
   	Serial.print("Earthquake n. ");
   	Serial.println(i+1);
 
