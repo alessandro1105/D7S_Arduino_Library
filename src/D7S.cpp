@@ -52,13 +52,13 @@ void D7SClass::begin() {
 //return the currect state
 d7s_status D7SClass::getState() {
    //read the STATE register at 0x1000
-   return read8bit(0x10, 0x00) & 0x07;
+   return (d7s_status) (read8bit(0x10, 0x00) & 0x07);
 }
 
 //return the currect state
 d7s_axis_state D7SClass::getAxisInUse() {
    //read the AXIS_STATE register at 0x1001
-   return read8bit(0x10, 0x01) & 0x03;
+   return (d7s_axis_state) (read8bit(0x10, 0x01) & 0x03);
 }
 
 //--- SETTINGS ---
@@ -213,7 +213,7 @@ void D7SClass::selftest() {
 //return the result of self-diagnostic test (OK/ERROR)
 d7s_mode_status D7SClass::getSelftestResult() {
    //return result of the selftest
-   return (read8bit(0x10, 0x02) & 0x07) >> 2;
+   return (d7s_mode_status) ((read8bit(0x10, 0x02) & 0x07) >> 2);
 }
 
 //--- OFFSET ACQUISITION ---
@@ -226,7 +226,7 @@ void D7SClass::acquireOffset() {
 //return the result of offset acquisition test (OK/ERROR)
 d7s_mode_status D7SClass::getAcquireOffsetResult() {
    //return result of the offset acquisition
-   return (read8bit(0x10, 0x02) & 0x0F) >> 3;
+   return (d7s_mode_status) ((read8bit(0x10, 0x02) & 0x0F) >> 3);
 }
 
 //--- SHUTOFF/COLLAPSE EVENT ---
@@ -269,7 +269,7 @@ uint8_t D7SClass::isReady() {
 
 //--- INTERRUPT ---
 //enable interrupt INT1 on specified pin
-void D7SClass::enableInterruptINT1(uint8_t pin = D7S_INT1_PIN) {
+void D7SClass::enableInterruptINT1(uint8_t pin) {
    //enable pull up resistor
    pinMode(pin, INPUT_PULLUP);
    //attach interrupt
@@ -277,7 +277,7 @@ void D7SClass::enableInterruptINT1(uint8_t pin = D7S_INT1_PIN) {
 }
 
 //enable interrupt INT2 on specified pin
-void D7SClass::enableInterruptINT2(uint8_t pin = D7S_INT2_PIN) {
+void D7SClass::enableInterruptINT2(uint8_t pin) {
    //enable pull up resistor
    pinMode(pin, INPUT_PULLUP);
    //attach interrupt
@@ -499,12 +499,12 @@ void D7SClass::int2() {
 
 //--- ISR HANDLER ---
 //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
-static void D7SClass::isr1() {
+void D7SClass::isr1() {
    D7S.int1();
 }
 
 //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
-static void D7SClass::isr2() {
+void D7SClass::isr2() {
    D7S.int2();
 }
 
