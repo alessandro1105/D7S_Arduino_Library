@@ -34,7 +34,7 @@
 
 //--- DEBUG ----
 //comment this line to disable all debug information
-//#define DEBUG
+#define DEBUG
 
 //d7s state
 typedef enum d7s_status {

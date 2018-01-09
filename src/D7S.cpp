@@ -34,11 +34,6 @@ D7SClass::D7SClass() {
 
    //reset events variable
    _events = 0;
-
-   //DEBUG
-   #ifdef DEBUG
-      Serial.begin(9600);
-   #endif
 }
 
 //--- BEGIN ---
@@ -316,16 +311,21 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read8bit ---");
+      Serial.print("REG: 0x");
+      Serial.print(regH, HEX);
+      Serial.println(regL, HEX);
    #endif
 
    //setting up i2c connection
    Wire.beginTransmission(D7S_ADDRESS);
+   
    //write register address
    Wire.write(regH); //register address high
+   delay(10); //delay to prevent freezing
    Wire.write(regL); //register address low
-   //delay to prevent freezing
-   delay(10);
-   //status of the Wire connection
+   delay(10); //delay to prevent freezing
+   
+   //send RE-START message
    uint8_t status = Wire.endTransmission(false);
 
    //DEBUG
@@ -337,11 +337,10 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //close the connection
-      Wire.endTransmission(true);
       //retry
       return read8bit(regH, regL);
    }
+
    //request 1 byte
    Wire.requestFrom(D7S_ADDRESS, 1);
    //wait until the data is received
@@ -349,18 +348,15 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
       ;
    //read the data
    uint8_t data = Wire.read();
-   //status of the Wire connection
-   status = Wire.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[STOP]: ");
-      Serial.println(status);
       Serial.println("--- read8bit ---");
    #endif
   
    //return the data
    return data;
+   //return 0;
 }
 
 //read 16 bit from the specified register
@@ -369,16 +365,21 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read16bit ---");
+      Serial.print("REG: 0x");
+      Serial.print(regH, HEX);
+      Serial.println(regL, HEX);
    #endif
 
    //setting up i2c connection
    Wire.beginTransmission(D7S_ADDRESS);
+   
    //write register address
    Wire.write(regH); //register address high
+   delay(10); //delay to prevent freezing
    Wire.write(regL); //register address low
-   //delay to prevent freezing
-   delay(10);
-   //status of the Wire connection
+   delay(10); //delay to prevent freezing
+   
+   //send RE-START message
    uint8_t status = Wire.endTransmission(false);
 
    //DEBUG
@@ -390,9 +391,7 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //close the connection
-      Wire.endTransmission(true);
-      //retry
+      //retry again
       return read16bit(regH, regL);
    }
 
@@ -404,13 +403,9 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //read the data
    uint8_t msb = Wire.read();
    uint8_t lsb = Wire.read();
-   //status of the Wire connection
-   status = Wire.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[STOP]: ");
-      Serial.println(status);
       Serial.println("--- read16bit ---");
    #endif
 
@@ -428,11 +423,16 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
 
    //setting up i2c connection
    Wire.beginTransmission(D7S_ADDRESS);
+   
    //write register address
    Wire.write(regH); //register address high
+   delay(10); //delay to prevent freezing
    Wire.write(regL); //register address low
+   delay(10); //delay to prevent freezing
+   
    //write data
    Wire.write(val);
+   delay(10); //delay to prevent freezing
    //closing the connection (STOP message)
    uint8_t status = Wire.endTransmission(true);
 
