@@ -25,6 +25,17 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+// If the board is Fishino32 then we need to fix I2C interrupts priority
+#if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+   // Include fix file
+   #include <utils/Fishino32.h>
+   // Define the new Wire instance to use
+   #define WireD7S _Wire
+#else 
+   #define WireD7S Wire
+#endif
+
+
 //--- INTERRUPT PIN ---
 #define D7S_INT1_PIN 2 //D7S INT1 goes to Arduino pin 2
 #define D7S_INT2_PIN 3 //D7S INT2 goes to Arduino pin 3
@@ -35,6 +46,7 @@
 //--- DEBUG ----
 //comment this line to disable all debug information
 #define DEBUG
+
 
 //d7s state
 typedef enum d7s_status {
@@ -80,6 +92,7 @@ typedef enum d7s_interrupt_event {
    SHUTOFF_EVENT = 2, //INT 1
    COLLAPSE_EVENT = 3 //INT 1
 };
+
 
 //class D7S
 class D7SClass {
