@@ -300,6 +300,10 @@ void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*h
    _handlers[event] = handler;
 }
 
+void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) (float, float, float)) {
+  registerInterruptEventHandler(event, (void (*)()) handler);
+}
+
 
 //----------------------- PRIVATE INTERFACE -----------------------
 

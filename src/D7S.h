@@ -163,6 +163,7 @@ class D7SClass {
       void startInterruptHandling(); //start interrupt handling
       void stopInterruptHandling(); //stop interrupt handling
       void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
+      void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) (float, float, float)); //assing the handler to the specific event
 
    private:
       //handler array (it cointaint the pointer to the user defined array)
