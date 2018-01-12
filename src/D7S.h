@@ -76,8 +76,8 @@ typedef enum d7s_threshold {
 
 //message status (selftes, offset acquisition)
 typedef enum d7s_mode_status {
-   OK = 0,
-   ERROR = 1
+   D7S_OK = 0,
+   D7S_ERROR = 1
 };
 
 //events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
