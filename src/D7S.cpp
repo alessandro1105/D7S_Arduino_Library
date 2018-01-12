@@ -270,6 +270,18 @@ void D7SClass::enableInterruptINT1(uint8_t pin) {
    attachInterrupt(digitalPinToInterrupt(pin), isr1, FALLING);
 }
 
+// Fishino32 (pic32) cannot handle CHANGE mode on the interrupt pin, so we need 2 pin for INT2 to handle RAISING and FALLING separately
+#if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+//enable interrupt INT2
+void D7SClass::enableInterruptINT2(uint8_t pinRising, uint8_t pinFalling) {
+   //enable pull up resistor
+   pinMode(pinRising, INPUT_PULLUP);
+   pinMode(pinFalling, INPUT_PULLUP);
+   //attach interrupt
+   attachInterrupt(digitalPinToInterrupt(pinRising), isr2, RISING);
+   attachInterrupt(digitalPinToInterrupt(pinFalling), isr2, FALLING);
+}
+#else
 //enable interrupt INT2 on specified pin
 void D7SClass::enableInterruptINT2(uint8_t pin) {
    //enable pull up resistor
@@ -277,6 +289,7 @@ void D7SClass::enableInterruptINT2(uint8_t pin) {
    //attach interrupt
    attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
 }
+#endif
 
 //start interrupt handling
 void D7SClass::startInterruptHandling() {

@@ -28,17 +28,12 @@
 // If the board is Fishino32 then we need to fix I2C interrupts priority
 #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
    // Include fix file
-   #include <utils/Fishino32.h>
+   #include <../utils/Fishino32.h>
    // Define the new Wire instance to use
    #define WireD7S _Wire
 #else 
    #define WireD7S Wire
 #endif
-
-
-//--- INTERRUPT PIN ---
-#define D7S_INT1_PIN 2 //D7S INT1 goes to Arduino pin 2
-#define D7S_INT2_PIN 3 //D7S INT2 goes to Arduino pin 3
 
 //--- ADDRESS ---
 #define D7S_ADDRESS 0x55 //D7S address on the I2C bus
@@ -158,8 +153,13 @@ class D7SClass {
       uint8_t isReady();
 
       //--- INTERRUPT ---
-      void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
-      void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
+      void enableInterruptINT1(uint8_t pin); //enable interrupt INT1 on specified pin
+      // Fishino32 (pic32) cannot handle CHANGE mode on the interrupt pin, so we need 2 pin for INT2 to handle RAISING and FALLING separately
+      #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+         void enableInterruptINT2(uint8_t pinRising, uint8_t pinFalling); //enable interrupt INT2
+      #else
+         void enableInterruptINT2(uint8_t pin); //enable interrupt INT2 on specified pin
+      #endif
       void startInterruptHandling(); //start interrupt handling
       void stopInterruptHandling(); //stop interrupt handling
       void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
