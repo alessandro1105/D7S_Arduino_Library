@@ -21,10 +21,17 @@
 
 #include <D7S.h>
 
-//interrupt pin INT1 of D7S attached to pin 2 of Arduino
-#define INT1_PIN 2
-//interrupt pin INT2 of D7S attached to pin 3 of Arduino
-#define INT2_PIN 3
+// Fishino32 (pic32) cannot handle CHANGE mode on interrupts, so we need to 2 interrupt pins for INT2 events 
+#ifdef _FISHINO32_
+  #define INT1_PIN 3 //interrupt pin INT1 of D7S attached to pin 3 of Fishino32
+  //interrupt pin INT2 of D7S attached to both pins 5 and 6 of Fishino32
+  #define INT2_PIN1 5
+  #define INT2_PIN2 6
+// Arduino interrupt pins
+#else
+  #define INT1_PIN 2 //interrupt pin INT1 of D7S attached to pin 2 of Arduino
+  #define INT2_PIN 3 //interrupt pin INT2 of D7S attached to pin 3 of Arduino
+#endif
 
 //--- EVENT HANDLERS --
 //function to handle the start of an earthquake
@@ -97,7 +104,12 @@ void setup() {
   //--- INTERRUPT SETTINGS ---
   //enabling interrupt INT1 on pin 2 of Arduino
   D7S.enableInterruptINT1(INT1_PIN);
-  D7S.enableInterruptINT2(INT2_PIN);
+  // Fishino32 (pic32) cannot handle CHANGE mode on interrupts, so we need to 2 interrupt pins for INT2 events 
+  #ifdef _FISHINO32_
+    D7S.enableInterruptINT2(INT2_PIN1, INT2_PIN2);
+  #else
+    D7S.enableInterruptINT2(INT2_PIN);
+  #endif
 
   //registering event handler
   D7S.registerInterruptEventHandler(START_EARTHQUAKE, &startEarthquakeHandler); //START_EARTHQUAKE event handler
