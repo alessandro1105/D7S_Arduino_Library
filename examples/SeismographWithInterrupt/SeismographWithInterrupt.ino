@@ -22,16 +22,21 @@
 #include <D7S.h>
 
 // Fishino32 (pic32) cannot handle CHANGE mode on interrupts, so we need to 2 interrupt pins for INT2 events 
-#ifdef _FISHINO32_
+#if defined(_FISHINO32_)
   #define INT1_PIN 3 //interrupt pin INT1 of D7S attached to pin 3 of Fishino32
   //interrupt pin INT2 of D7S attached to both pins 5 and 6 of Fishino32
   #define INT2_PIN1 5
   #define INT2_PIN2 6
-// Arduino interrupt pins
+// Esp8266 interrupt pins (tested on WeMos D1 R1)
+#elif defined(ESP8266)
+  #define INT1_PIN D7 //interrupt pin INT1 of D7S attached to pin D7 of ESP8266
+  #define INT2_PIN D8 //interrupt pin INT2 of D7S attached to pin D8 of ESP8266
+// Arduino UNO/Fishino UNO interrupt pins
 #else
   #define INT1_PIN 2 //interrupt pin INT1 of D7S attached to pin 2 of Arduino
   #define INT2_PIN 3 //interrupt pin INT2 of D7S attached to pin 3 of Arduino
 #endif
+
 
 //--- EVENT HANDLERS --
 //function to handle the start of an earthquake
