@@ -19,9 +19,7 @@
    - https://www.open-electronics.org
 */
 
-#include <Arduino.h>
-#include <D7S.h>
-#include <Wire.h>
+#include "D7S.h"
 
 //----------------------- PUBLIC INTERFACE -----------------------
 
@@ -35,30 +33,26 @@ D7SClass::D7SClass() {
    //reset events variable
    _events = 0;
 
-   //DEBUG
-   #ifdef DEBUG
-      Serial.begin(9600);
-   #endif
 }
 
 //--- BEGIN ---
 //used to initialize Wire
 void D7SClass::begin() {
    //begin Wire
-   Wire.begin();
+   WireD7S.begin();
 }
 
 //--- STATUS ---
 //return the currect state
 d7s_status D7SClass::getState() {
    //read the STATE register at 0x1000
-   return read8bit(0x10, 0x00) & 0x07;
+   return (d7s_status) (read8bit(0x10, 0x00) & 0x07);
 }
 
 //return the currect state
 d7s_axis_state D7SClass::getAxisInUse() {
    //read the AXIS_STATE register at 0x1001
-   return read8bit(0x10, 0x01) & 0x03;
+   return (d7s_axis_state) (read8bit(0x10, 0x01) & 0x03);
 }
 
 //--- SETTINGS ---
@@ -213,7 +207,7 @@ void D7SClass::selftest() {
 //return the result of self-diagnostic test (OK/ERROR)
 d7s_mode_status D7SClass::getSelftestResult() {
    //return result of the selftest
-   return (read8bit(0x10, 0x02) & 0x07) >> 2;
+   return (d7s_mode_status) ((read8bit(0x10, 0x02) & 0x07) >> 2);
 }
 
 //--- OFFSET ACQUISITION ---
@@ -226,7 +220,7 @@ void D7SClass::acquireOffset() {
 //return the result of offset acquisition test (OK/ERROR)
 d7s_mode_status D7SClass::getAcquireOffsetResult() {
    //return result of the offset acquisition
-   return (read8bit(0x10, 0x02) & 0x0F) >> 3;
+   return (d7s_mode_status) ((read8bit(0x10, 0x02) & 0x0F) >> 3);
 }
 
 //--- SHUTOFF/COLLAPSE EVENT ---
@@ -269,7 +263,7 @@ uint8_t D7SClass::isReady() {
 
 //--- INTERRUPT ---
 //enable interrupt INT1 on specified pin
-void D7SClass::enableInterruptINT1(uint8_t pin = D7S_INT1_PIN) {
+void D7SClass::enableInterruptINT1(uint8_t pin) {
    //enable pull up resistor
    pinMode(pin, INPUT_PULLUP);
    //attach interrupt
@@ -277,11 +271,19 @@ void D7SClass::enableInterruptINT1(uint8_t pin = D7S_INT1_PIN) {
 }
 
 //enable interrupt INT2 on specified pin
-void D7SClass::enableInterruptINT2(uint8_t pin = D7S_INT2_PIN) {
+void D7SClass::enableInterruptINT2(uint8_t pin) {
    //enable pull up resistor
    pinMode(pin, INPUT_PULLUP);
-   //attach interrupt
-   attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
+   // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+   // as RISING the same pin detaching the previus interrupt
+   #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+      pinINT2 = pin;
+      //attach interrupt
+      attachInterrupt(digitalPinToInterrupt(pin), isr2, FALLING);
+   #else
+      //attach interrupt
+      attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
+   #endif
 }
 
 //start interrupt handling
@@ -306,6 +308,10 @@ void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*h
    _handlers[event] = handler;
 }
 
+void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) (float, float, float)) {
+  registerInterruptEventHandler(event, (void (*)()) handler);
+}
+
 
 //----------------------- PRIVATE INTERFACE -----------------------
 
@@ -316,17 +322,22 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read8bit ---");
+      Serial.print("REG: 0x");
+      Serial.print(regH, HEX);
+      Serial.println(regL, HEX);
    #endif
 
    //setting up i2c connection
-   Wire.beginTransmission(D7S_ADDRESS);
+   WireD7S.beginTransmission(D7S_ADDRESS);
+   
    //write register address
-   Wire.write(regH); //register address high
-   Wire.write(regL); //register address low
-   //delay to prevent freezing
-   delay(10);
-   //status of the Wire connection
-   uint8_t status = Wire.endTransmission(false);
+   WireD7S.write(regH); //register address high
+   delay(10); //delay to prevent freezing
+   WireD7S.write(regL); //register address low
+   delay(10); //delay to prevent freezing
+   
+   //send RE-START message
+   uint8_t status = WireD7S.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
@@ -337,25 +348,20 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //close the connection
-      Wire.endTransmission(true);
       //retry
       return read8bit(regH, regL);
    }
+
    //request 1 byte
-   Wire.requestFrom(D7S_ADDRESS, 1);
+   WireD7S.requestFrom(D7S_ADDRESS, 1);
    //wait until the data is received
-   while (Wire.available() < 1)
+   while (WireD7S.available() < 1)
       ;
    //read the data
-   uint8_t data = Wire.read();
-   //status of the Wire connection
-   status = Wire.endTransmission(true);
+   uint8_t data = WireD7S.read();
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[STOP]: ");
-      Serial.println(status);
       Serial.println("--- read8bit ---");
    #endif
   
@@ -369,17 +375,22 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read16bit ---");
+      Serial.print("REG: 0x");
+      Serial.print(regH, HEX);
+      Serial.println(regL, HEX);
    #endif
 
    //setting up i2c connection
-   Wire.beginTransmission(D7S_ADDRESS);
+   WireD7S.beginTransmission(D7S_ADDRESS);
+   
    //write register address
-   Wire.write(regH); //register address high
-   Wire.write(regL); //register address low
-   //delay to prevent freezing
-   delay(10);
-   //status of the Wire connection
-   uint8_t status = Wire.endTransmission(false);
+   WireD7S.write(regH); //register address high
+   delay(10); //delay to prevent freezing
+   WireD7S.write(regL); //register address low
+   delay(10); //delay to prevent freezing
+   
+   //send RE-START message
+   uint8_t status = WireD7S.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
@@ -390,27 +401,21 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //close the connection
-      Wire.endTransmission(true);
-      //retry
+      //retry again
       return read16bit(regH, regL);
    }
 
    //request 2 byte
-   Wire.requestFrom(D7S_ADDRESS, 2);
+   WireD7S.requestFrom(D7S_ADDRESS, 2);
    //wait until the data is received
-   while (Wire.available() < 2)
+   while (WireD7S.available() < 2)
       ;
    //read the data
-   uint8_t msb = Wire.read();
-   uint8_t lsb = Wire.read();
-   //status of the Wire connection
-   status = Wire.endTransmission(true);
+   uint8_t msb = WireD7S.read();
+   uint8_t lsb = WireD7S.read();
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[STOP]: ");
-      Serial.println(status);
       Serial.println("--- read16bit ---");
    #endif
 
@@ -427,14 +432,19 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    #endif
 
    //setting up i2c connection
-   Wire.beginTransmission(D7S_ADDRESS);
+   WireD7S.beginTransmission(D7S_ADDRESS);
+   
    //write register address
-   Wire.write(regH); //register address high
-   Wire.write(regL); //register address low
+   WireD7S.write(regH); //register address high
+   delay(10); //delay to prevent freezing
+   WireD7S.write(regL); //register address low
+   delay(10); //delay to prevent freezing
+   
    //write data
-   Wire.write(val);
+   WireD7S.write(val);
+   delay(10); //delay to prevent freezing
    //closing the connection (STOP message)
-   uint8_t status = Wire.endTransmission(true);
+   uint8_t status = WireD7S.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
@@ -484,11 +494,27 @@ void D7SClass::int2() {
    if (_interruptEnabled) {
       //check what in what state the D7S is
       if (isEarthquakeOccuring()) { //earthquake started
+         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+         // as RISING the same pin detaching the previus interrupt
+         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+            // Detaching the previus interrupt as FALLING
+            detachInterrupt(digitalPinToInterrupt(pinINT2));
+            // Attaching the same interrupt as RISING
+            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, RISING);
+         #endif
          //if the handler is defined
          if (_handlers[0]) {
             _handlers[0](); //START_EARTHQUAKE EVENT
          }
       } else { //earthquake ended
+         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+         // as RISING the same pin detaching the previus interrupt
+         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+            // Detaching the previus interrupt as FALLING
+            detachInterrupt(digitalPinToInterrupt(pinINT2));
+            // Attaching the same interrupt as RISING
+            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, FALLING);
+         #endif
          //if the handler is defined
          if (_handlers[1]) {
             ((void (*)(float, float, float)) _handlers[1])(getLastestSI(0), getLastestPGA(0), getLastestTemperature(0)); //END_EARTHQUAKE EVENT
@@ -499,12 +525,12 @@ void D7SClass::int2() {
 
 //--- ISR HANDLER ---
 //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
-static void D7SClass::isr1() {
+void D7SClass::isr1() {
    D7S.int1();
 }
 
 //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
-static void D7SClass::isr2() {
+void D7SClass::isr2() {
    D7S.int2();
 }
 

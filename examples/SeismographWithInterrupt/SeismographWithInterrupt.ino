@@ -21,10 +21,19 @@
 
 #include <D7S.h>
 
-//interrupt pin INT1 of D7S attached to pin 2 of Arduino
-#define INT1_PIN 2
-//interrupt pin INT2 of D7S attached to pin 3 of Arduino
-#define INT2_PIN 3
+// Fishino32 interrupt pins
+#if defined(_FISHINO32_)
+  #define INT1_PIN 3 //interrupt pin INT1 of D7S attached to pin 3 of Fishino32
+  #define INT2_PIN 5 //interrupt pin INT2 of D7S attached to pin 5 of Fishino32
+// Esp8266 interrupt pins (tested on WeMos D1 R1)
+#elif defined(ESP8266)
+  #define INT1_PIN D7 //interrupt pin INT1 of D7S attached to pin D7 of ESP8266
+  #define INT2_PIN D8 //interrupt pin INT2 of D7S attached to pin D8 of ESP8266
+// Arduino UNO/Fishino UNO interrupt pins
+#else
+  #define INT1_PIN 2 //interrupt pin INT1 of D7S attached to pin 2 of Arduino
+  #define INT2_PIN 3 //interrupt pin INT2 of D7S attached to pin 3 of Arduino
+#endif
 
 //--- EVENT HANDLERS --
 //function to handle the start of an earthquake
@@ -95,8 +104,9 @@ void setup() {
   D7S.setAxis(SWITCH_AT_INSTALLATION);
 
   //--- INTERRUPT SETTINGS ---
-  //enabling interrupt INT1 on pin 2 of Arduino
+  //enabling interrupt INT1
   D7S.enableInterruptINT1(INT1_PIN);
+  //enabling interrupt INT2
   D7S.enableInterruptINT2(INT2_PIN);
 
   //registering event handler

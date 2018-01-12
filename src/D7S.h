@@ -25,9 +25,15 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-//--- INTERRUPT PIN ---
-#define D7S_INT1_PIN 2 //D7S INT1 goes to Arduino pin 2
-#define D7S_INT2_PIN 3 //D7S INT2 goes to Arduino pin 3
+// If the board is Fishino32 then we need to fix I2C interrupts priority
+#if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+   // Include fix file
+   #include "../utils/Fishino32.h"
+   // Define the new Wire instance to use
+   #define WireD7S _Wire
+#else 
+   #define WireD7S Wire
+#endif
 
 //--- ADDRESS ---
 #define D7S_ADDRESS 0x55 //D7S address on the I2C bus
@@ -35,6 +41,7 @@
 //--- DEBUG ----
 //comment this line to disable all debug information
 //#define DEBUG
+
 
 //d7s state
 typedef enum d7s_status {
@@ -69,8 +76,8 @@ typedef enum d7s_threshold {
 
 //message status (selftes, offset acquisition)
 typedef enum d7s_mode_status {
-   OK = 0,
-   ERROR = 1
+   D7S_OK = 0,
+   D7S_ERROR = 1
 };
 
 //events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
@@ -80,6 +87,7 @@ typedef enum d7s_interrupt_event {
    SHUTOFF_EVENT = 2, //INT 1
    COLLAPSE_EVENT = 3 //INT 1
 };
+
 
 //class D7S
 class D7SClass {
@@ -145,11 +153,12 @@ class D7SClass {
       uint8_t isReady();
 
       //--- INTERRUPT ---
-      void enableInterruptINT1(uint8_t pin = D7S_INT1_PIN); //enable interrupt INT1 on specified pin
-      void enableInterruptINT2(uint8_t pin = D7S_INT2_PIN); //enable interrupt INT2 on specified pin
+      void enableInterruptINT1(uint8_t pin); //enable interrupt INT1 on specified pin
+      void enableInterruptINT2(uint8_t pin); //enable interrupt INT2 on specified pin
       void startInterruptHandling(); //start interrupt handling
       void stopInterruptHandling(); //stop interrupt handling
       void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()); //assing the handler to the specific event
+      void registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) (float, float, float)); //assing the handler to the specific event
 
    private:
       //handler array (it cointaint the pointer to the user defined array)
@@ -178,6 +187,12 @@ class D7SClass {
       //--- ISR HANDLER ---
       static void isr1(); //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
       static void isr2(); //it handle the CHANGE event thant occur to the INT2 D7S pin (glue routine)
+
+      // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+      // as RISING the same pin detaching the previus interrupt
+      #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+         uint8_t pinINT2;
+      #endif
 
 };
 
