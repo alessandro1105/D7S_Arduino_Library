@@ -19,7 +19,7 @@
    - https://www.open-electronics.org
 */
 
-#include <D7S.h>
+#include "D7S.h"
 
 //----------------------- PUBLIC INTERFACE -----------------------
 
@@ -270,26 +270,21 @@ void D7SClass::enableInterruptINT1(uint8_t pin) {
    attachInterrupt(digitalPinToInterrupt(pin), isr1, FALLING);
 }
 
-// Fishino32 (pic32) cannot handle CHANGE mode on the interrupt pin, so we need 2 pin for INT2 to handle RAISING and FALLING separately
-#if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
-//enable interrupt INT2
-void D7SClass::enableInterruptINT2(uint8_t pinRising, uint8_t pinFalling) {
-   //enable pull up resistor
-   pinMode(pinRising, INPUT_PULLUP);
-   pinMode(pinFalling, INPUT_PULLUP);
-   //attach interrupt
-   attachInterrupt(digitalPinToInterrupt(pinRising), isr2, RISING);
-   attachInterrupt(digitalPinToInterrupt(pinFalling), isr2, FALLING);
-}
-#else
 //enable interrupt INT2 on specified pin
 void D7SClass::enableInterruptINT2(uint8_t pin) {
    //enable pull up resistor
    pinMode(pin, INPUT_PULLUP);
-   //attach interrupt
-   attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
+   // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+   // as RISING the same pin detaching the previus interrupt
+   #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+      pinINT2 = pin;
+      //attach interrupt
+      attachInterrupt(digitalPinToInterrupt(pin), isr2, FALLING);
+   #else
+      //attach interrupt
+      attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
+   #endif
 }
-#endif
 
 //start interrupt handling
 void D7SClass::startInterruptHandling() {
@@ -500,11 +495,27 @@ void D7SClass::int2() {
    if (_interruptEnabled) {
       //check what in what state the D7S is
       if (isEarthquakeOccuring()) { //earthquake started
+         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+         // as RISING the same pin detaching the previus interrupt
+         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+            // Detaching the previus interrupt as FALLING
+            detachInterrupt(digitalPinToInterrupt(pinINT2));
+            // Attaching the same interrupt as RISING
+            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, RISING);
+         #endif
          //if the handler is defined
          if (_handlers[0]) {
             _handlers[0](); //START_EARTHQUAKE EVENT
          }
       } else { //earthquake ended
+         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
+         // as RISING the same pin detaching the previus interrupt
+         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
+            // Detaching the previus interrupt as FALLING
+            detachInterrupt(digitalPinToInterrupt(pinINT2));
+            // Attaching the same interrupt as RISING
+            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, FALLING);
+         #endif
          //if the handler is defined
          if (_handlers[1]) {
             ((void (*)(float, float, float)) _handlers[1])(getLastestSI(0), getLastestPGA(0), getLastestTemperature(0)); //END_EARTHQUAKE EVENT
