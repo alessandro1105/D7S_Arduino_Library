@@ -18,6 +18,8 @@
    - http://www.elettronicain.it
    - https://www.open-electronics.org
 */
+#ifndef D7S_FISHINO32_H
+#define D7S_FISHINO32_H
 
 #include <Arduino.h>
 #include <DTWI.h>
@@ -33,7 +35,6 @@
 #define __DTWI0_SCL_PIN  22
 #define __DTWI0_SDA_PIN  21
 
-
 // User defined DTWI class
 class _DTWI0 : public DTWI {
 
@@ -47,6 +48,10 @@ public:
     _DTWI0();
 };
 
-
 extern TwoWire &___wire();
 #define _Wire ___wire()
+
+// The Arduino IDE seems to ignore this file, so we need to include it manually
+#include "Fishino32.cpp"
+
+#endif

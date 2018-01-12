@@ -19,7 +19,7 @@
    - https://www.open-electronics.org
 */
 
-#include <../utils/Fishino32.h>
+#include "Fishino32.h"
 
 _DTWI0 * _DTWI0::p_DTWI0 = NULL;
 
