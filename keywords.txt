@@ -6,44 +6,44 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-D7S								KEYWORD1
+D7S	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-begin							KEYWORD2
-getState						KEYWORD2
-getAxisInUse					KEYWORD2
-setThreshold					KEYWORD2
-setAxis							KEYWORD2
-getLastestSI					KEYWORD2
-getLastestPGA					KEYWORD2
-getLastestTemperature			KEYWORD2
-getRankedSI						KEYWORD2
-getRankedPGA					KEYWORD2
-getRankedTemperature			KEYWORD2
-getInstantaneusSI				KEYWORD2
-getInstantaneusPGA				KEYWORD2
-clearEarthquakeData				KEYWORD2
-clearInstallationData			KEYWORD2
-clearLastestOffsetData			KEYWORD2
-clearSelftestData				KEYWORD2
-clearAllData					KEYWORD2
-initialize						KEYWORD2
-selftest						KEYWORD2
-getSelftestResult				KEYWORD2
-acquireOffset					KEYWORD2
-getAcquireOffsetResult			KEYWORD2
-isInCollapse					KEYWORD2
-isInShutoff						KEYWORD2
-resetEvents						KEYWORD2
-isEarthquakeOccuring			KEYWORD2
-isReady							KEYWORD2
-enableInterruptINT1				KEYWORD2
-enableInterruptINT2				KEYWORD2
-startInterruptHandling			KEYWORD2
-stopInterruptHandling			KEYWORD2
+begin	KEYWORD2
+getState	KEYWORD2
+getAxisInUse	KEYWORD2
+setThreshold	KEYWORD2
+setAxis	KEYWORD2
+getLastestSI	KEYWORD2
+getLastestPGA	KEYWORD2
+getLastestTemperature	KEYWORD2
+getRankedSI	KEYWORD2
+getRankedPGA	KEYWORD2
+getRankedTemperature	KEYWORD2
+getInstantaneusSI	KEYWORD2
+getInstantaneusPGA	KEYWORD2
+clearEarthquakeData	KEYWORD2
+clearInstallationData	KEYWORD2
+clearLastestOffsetData	KEYWORD2
+clearSelftestData	KEYWORD2
+clearAllData	KEYWORD2
+initialize	KEYWORD2
+selftest	KEYWORD2
+getSelftestResult	KEYWORD2
+acquireOffset	KEYWORD2
+getAcquireOffsetResult	KEYWORD2
+isInCollapse	KEYWORD2
+isInShutoff	KEYWORD2
+resetEvents	KEYWORD2
+isEarthquakeOccuring	KEYWORD2
+isReady	KEYWORD2
+enableInterruptINT1	KEYWORD2
+enableInterruptINT2	KEYWORD2
+startInterruptHandling	KEYWORD2
+stopInterruptHandling	KEYWORD2
 registerInterruptEventHandler	KEYWORD2
 
 
@@ -51,29 +51,29 @@ registerInterruptEventHandler	KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
-NORMAL_MODE						LITERAL1
-NORMAL_MODE_NOT_IN_STANBY		LITERAL1
-INITIAL_INSTALLATION_MODE		LITERAL1
-OFFSET_ACQUISITION_MODE			LITERAL1
-SELFTEST_MODE					LITERAL1
+NORMAL_MODE	LITERAL1
+NORMAL_MODE_NOT_IN_STANBY	LITERAL1
+INITIAL_INSTALLATION_MODE	LITERAL1
+OFFSET_ACQUISITION_MODE	LITERAL1
+SELFTEST_MODE	LITERAL1
 
-FORCE_YZ						LITERAL1
-FORCE_XZ						LITERAL1
-FORXE_XY						LITERAL1
-AUTO_SWITCH						LITERAL1
-SWITCH_AT_INSTALLATION			LITERAL1
+FORCE_YZ	LITERAL1
+FORCE_XZ	LITERAL1
+FORXE_XY	LITERAL1
+AUTO_SWITCH	LITERAL1
+SWITCH_AT_INSTALLATION	LITERAL1
 
-AXIS_YZ							LITERAL1
-AXIS_XZ							LITERAL1
-AXIS_XY							LITERAL1
+AXIS_YZ	LITERAL1
+AXIS_XZ	LITERAL1
+AXIS_XY	LITERAL1
 
-THRESHOLD_HIGH					LITERAL1
-THRESHOLD_LOW					LITERAL1
+THRESHOLD_HIGH	LITERAL1
+THRESHOLD_LOW	LITERAL1
 
-D7S_OK							LITERAL1
-D7S_ERROR						LITERAL1
+D7S_OK	LITERAL1
+D7S_ERROR	LITERAL1
 
-START_EARTHQUAKE				LITERAL1
-END_EARTHQUAKE					LITERAL1
-SHUTOFF_EVENT					LITERAL1
-COLLAPSE_EVENT					LITERAL1
+START_EARTHQUAKE	LITERAL1
+END_EARTHQUAKE	LITERAL1
+SHUTOFF_EVENT	LITERAL1
+COLLAPSE_EVENT	LITERAL1
