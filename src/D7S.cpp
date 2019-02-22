@@ -87,30 +87,18 @@ void D7SClass::setAxis(d7s_axis_settings axisMode) {
 //--- LASTEST DATA ---
 //get the lastest SI at specified index (up to 5) [m/s]
 float D7SClass::getLastestSI(uint8_t index) {
-   //check if the index is in bound
-   if (index < 0 || index > 4) {
-      return 0;
-   }
    //return the value
    return ((float) read16bit(0x30 + index, 0x08)) / 1000;
 }
 
 //get the lastest PGA at specified index (up to 5) [m/s^2]
 float D7SClass::getLastestPGA(uint8_t index) {
-   //check if the index is in bound
-   if (index < 0 || index > 4) {
-      return 0;
-   }
    //return the value
    return ((float) read16bit(0x30 + index, 0x0A)) / 1000;
 }
 
 //get the lastest Temperature at specified index (up to 5) [Celsius]
 float D7SClass::getLastestTemperature(uint8_t index) {
-   //check if the index is in bound
-   if (index < 0 || index > 4) {
-      return 0;
-   }
    //return the value
    return (float) ((int16_t) read16bit(0x30 + index, 0x06)) / 10;
 }
@@ -118,30 +106,18 @@ float D7SClass::getLastestTemperature(uint8_t index) {
 //--- RANKED DATA ---
 //get the ranked SI at specified position (up to 5) [m/s]
 float D7SClass::getRankedSI(uint8_t position) {
-   //check if the position is in bound
-   if (position < 0 || position > 4) {
-      return 0;
-   }
    //return the value
    return ((float) read16bit(0x30 + position +5, 0x08)) / 1000;
 }
 
 //get the ranked PGA at specified position (up to 5) [m/s^2]
 float D7SClass::getRankedPGA(uint8_t position) {
-   //check if the position is in bound
-   if (position < 0 || position > 4) {
-      return 0;
-   }
    //return the value
    return ((float) read16bit(0x30 + position +5, 0x0A)) / 1000;
 }
 
 //get the ranked Temperature at specified position (up to 5) [Celsius]
 float D7SClass::getRankedTemperature(uint8_t position) {
-   //check if the position is in bound
-   if (position < 0 || position > 4) {
-      return 0;
-   }
    //return the value
    return (float) ((int16_t) read16bit(0x30 + position +5, 0x06)) / 10;
 }
@@ -483,21 +459,21 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    
    //write register address
    WireD7S.write(regH); //register address high
-   delay(10); //delay to prevent freezing
    WireD7S.write(regL); //register address low
-   delay(10); //delay to prevent freezing
    
    //write data
    WireD7S.write(val);
-   delay(10); //delay to prevent freezing
-   //closing the connection (STOP message)
-   uint8_t status = WireD7S.endTransmission(true);
 
    //DEBUG
    #ifdef DEBUG
+      //closing the connection (STOP message)
+      uint8_t status = WireD7S.endTransmission(true);
+
       Serial.print("status: ");
       Serial.println(status);
       Serial.println("--- write8bit ---");
+   #else
+      WireD7S.endTransmission(true);
    #endif
 }
 

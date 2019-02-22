@@ -40,7 +40,7 @@
 
 //--- DEBUG ----
 //comment this line to disable all debug information
-#define DEBUG
+//#define DEBUG
 
 
 //d7s state
