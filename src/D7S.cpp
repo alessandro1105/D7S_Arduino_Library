@@ -318,13 +318,13 @@ void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*h
 //--- READ ---
 //read 8 bit from the specified register
 uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
-
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read8bit ---");
-      Serial.print("REG: 0x");
-      Serial.print(regH, HEX);
-      Serial.println(regL, HEX);
+      Serial.print("regH: 0x");
+      Serial.println(regH, HEX);
+      Serial.print("regL: 0x");
+      Serial.println(regH, HEX);
    #endif
 
    //setting up i2c connection
@@ -332,42 +332,60 @@ uint8_t D7SClass::read8bit(uint8_t regH, uint8_t regL) {
    
    //write register address
    WireD7S.write(regH); //register address high
-   delay(10); //delay to prevent freezing
    WireD7S.write(regL); //register address low
-   delay(10); //delay to prevent freezing
    
    //send RE-START message
    uint8_t status = WireD7S.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[RE-START]: ");
-      //send RE-START message
+      Serial.print("RE-START status: ");
       Serial.println(status);
    #endif
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //retry
+      #ifdef DEBUG
+        Serial.println("--- read8bit ---");
+      #endif
+      //status is not 0 so we need to retry the reading
+      //before retry is better to delay for some time
+      delay(100);
       return read8bit(regH, regL);
    }
 
-   //request 1 byte
+   //request 2 byte
    WireD7S.requestFrom(D7S_ADDRESS, 1);
+
+   //we need to set up a timer to prevent deadlock
+   long time = millis();
    //wait until the data is received
-   while (WireD7S.available() < 1)
+   while (WireD7S.available() < 2 && time + 100 > millis())
       ;
+
+   //let's check if the data is ready or the timer expires
+   if (WireD7S.available() < 1) {
+      #ifdef DEBUG
+        Serial.println("--- read8bit ---");
+      #endif
+      //the data is not ready and we need to retry the reading
+      //before retry is better to delay for some time
+      delay(100);
+      return read8bit(regH, regL);
+   }
+
    //read the data
    uint8_t data = WireD7S.read();
 
    //DEBUG
    #ifdef DEBUG
-      Serial.println("--- read8bit ---");
+      Serial.print('data: 0x');
+      Serial.println(data);
+      Serial.println("--- read16bit ---");
    #endif
-  
+
    //return the data
    return data;
-   //return 0;
 }
 
 //read 16 bit from the specified register
@@ -376,9 +394,10 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- read16bit ---");
-      Serial.print("REG: 0x");
-      Serial.print(regH, HEX);
-      Serial.println(regL, HEX);
+      Serial.print("regH: 0x");
+      Serial.println(regH, HEX);
+      Serial.print("regL: 0x");
+      Serial.println(regH, HEX);
    #endif
 
    //setting up i2c connection
@@ -386,37 +405,58 @@ uint16_t D7SClass::read16bit(uint8_t regH, uint8_t regL) {
    
    //write register address
    WireD7S.write(regH); //register address high
-   delay(10); //delay to prevent freezing
    WireD7S.write(regL); //register address low
-   delay(10); //delay to prevent freezing
    
    //send RE-START message
    uint8_t status = WireD7S.endTransmission(false);
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[RE-START]: ");
-      //send RE-START message
+      Serial.print("RE-START status: ");
       Serial.println(status);
    #endif
 
    //if the status != 0 there is an error
    if (status != 0) {
-      //retry again
+      #ifdef DEBUG
+        Serial.println("--- read16bit ---");
+      #endif
+      //status is not 0 so we need to retry the reading
+      //before retry is better to delay for some time
+      delay(100);
       return read16bit(regH, regL);
    }
 
    //request 2 byte
    WireD7S.requestFrom(D7S_ADDRESS, 2);
+
+   //we need to set up a timer to prevent deadlock
+   long time = millis();
    //wait until the data is received
-   while (WireD7S.available() < 2)
+   while (WireD7S.available() < 2 && time + 100 > millis())
       ;
+
+   //let's check if the data is ready or the timer expires
+   if (WireD7S.available() < 2) {
+      #ifdef DEBUG
+        Serial.println("--- read16bit ---");
+      #endif
+      //the data is not ready and we need to retry the reading
+      //before retry is better to delay for some time
+      delay(100);
+      return read16bit(regH, regL);
+   }
+
    //read the data
    uint8_t msb = WireD7S.read();
    uint8_t lsb = WireD7S.read();
 
    //DEBUG
    #ifdef DEBUG
+      Serial.print('msb: 0x');
+      Serial.println(msb);
+      Serial.print('lsb: 0x');
+      Serial.println(lsb);
       Serial.println("--- read16bit ---");
    #endif
 
@@ -430,6 +470,12 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
    //DEBUG
    #ifdef DEBUG
       Serial.println("--- write8bit ---");
+      Serial.print("regH: 0x");
+      Serial.println(regH, HEX);
+      Serial.print("regL: 0x");
+      Serial.println(regH, HEX);
+      Serial.print("val: 0x");
+      Serial.println(regH, HEX);
    #endif
 
    //setting up i2c connection
@@ -449,8 +495,7 @@ void D7SClass::write8bit(uint8_t regH, uint8_t regL, uint8_t val) {
 
    //DEBUG
    #ifdef DEBUG
-      Serial.print("[STOP]: ");
-      //closing the connection (STOP message)
+      Serial.print("status: ");
       Serial.println(status);
       Serial.println("--- write8bit ---");
    #endif

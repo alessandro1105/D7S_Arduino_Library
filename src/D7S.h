@@ -40,11 +40,11 @@
 
 //--- DEBUG ----
 //comment this line to disable all debug information
-//#define DEBUG
+#define DEBUG
 
 
 //d7s state
-typedef enum d7s_status {
+enum d7s_status {
    NORMAL_MODE = 0x00,
    NORMAL_MODE_NOT_IN_STANBY = 0x01, //earthquake in progress
    INITIAL_INSTALLATION_MODE = 0x02,
@@ -53,7 +53,7 @@ typedef enum d7s_status {
 };
 
 //d7s axis settings
-typedef enum d7s_axis_settings {
+enum d7s_axis_settings {
    FORCE_YZ = 0x00,
    FORCE_XZ = 0x01,
    FORXE_XY = 0x02,
@@ -62,26 +62,26 @@ typedef enum d7s_axis_settings {
 };
 
 //axis state
-typedef enum d7s_axis_state {
+enum d7s_axis_state {
    AXIS_YZ = 0x00,
    AXIS_XZ = 0x01,
    AXIS_XY = 0x02
 };
 
 //d7s threshold settings
-typedef enum d7s_threshold {
+enum d7s_threshold {
    THRESHOLD_HIGH = 0x00,
    THRESHOLD_LOW = 0x01
 };
 
 //message status (selftes, offset acquisition)
-typedef enum d7s_mode_status {
+enum d7s_mode_status {
    D7S_OK = 0,
    D7S_ERROR = 1
 };
 
 //events handled externaly by the using using an handler (the d7s int1, int2 must be connected to interrupt pin)
-typedef enum d7s_interrupt_event {
+enum d7s_interrupt_event {
    START_EARTHQUAKE = 0, //INT 2
    END_EARTHQUAKE = 1, //INT 2
    SHUTOFF_EVENT = 2, //INT 1
