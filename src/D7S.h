@@ -25,8 +25,6 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#define WireD7S Wire
-
 //--- ADDRESS ---
 #define D7S_ADDRESS 0x55 //D7S address on the I2C bus
 
