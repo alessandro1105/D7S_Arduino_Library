@@ -32,7 +32,18 @@ D7SClass::D7SClass() {
 
    //reset events variable
    _events = 0;
+
+   // Reset the occuring variable
+   _occuring = 0;
+   _shutoffHappened = 0;
+
+   // Interrupt disabled
+   _interruptEnabled = 0;
    
+   // Reset interrupt pins variables
+   _pinINT1 = 0;
+   _pinINT2 = 0;
+   _pinINT2ChangeCapable = 1;
 }
 
 //--- BEGIN ---
@@ -238,54 +249,56 @@ uint8_t D7SClass::isReady() {
 }
 
 //--- INTERRUPT ---
-//enable interrupt INT1 on specified pin
-void D7SClass::enableInterruptINT1(uint8_t pin) {
-   //enable pull up resistor
-   pinMode(pin, INPUT_PULLUP);
-   //attach interrupt
-   attachInterrupt(digitalPinToInterrupt(pin), isr1, FALLING);
+// Attach interrupts
+void D7SClass::attachInterruptHandling(uint8_t pinINT1, uint8_t pinINT2, uint8_t pinINT2ChangeCapable = 1) {
+   // INT1
+   pinMode(pinINT1, INPUT_PULLUP); // Enable pull up resistor
+   attachInterrupt(digitalPinToInterrupt(pinINT1), isr1, FALLING); // Attach isr to interrupt event
+
+   // INT2
+   pinMode(pinINT2, INPUT_PULLUP); // Enable pull up resistor
+   delay(500);
+   if (pinINT2ChangeCapable) {
+      attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, CHANGE); // Attach isr to interrupt event
+   } else {
+      attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, FALLING); // Attach isr to interrupt event
+   }
+
+   // Save the pin data
+   _pinINT1 = pinINT1;
+   _pinINT2 = pinINT2;
+   _pinINT2ChangeCapable = pinINT2ChangeCapable;
+
+   // Set that the interrupts are enabled
+   _interruptEnabled = 0;
+
 }
 
-//enable interrupt INT2 on specified pin
-void D7SClass::enableInterruptINT2(uint8_t pin) {
-   //enable pull up resistor
-   pinMode(pin, INPUT_PULLUP);
-   // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
-   // as RISING the same pin detaching the previus interrupt
-   #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
-      pinINT2 = pin;
-      //attach interrupt
-      attachInterrupt(digitalPinToInterrupt(pin), isr2, FALLING);
-   #else
-      //attach interrupt
-      attachInterrupt(digitalPinToInterrupt(pin), isr2, CHANGE);
-   #endif
+// Detach interrupts
+void D7SClass::detachInterruptHandling() {
+   detachInterrupt(digitalPinToInterrupt(_pinINT1));
+   detachInterrupt(digitalPinToInterrupt(_pinINT2));
 }
 
-//start interrupt handling
-void D7SClass::startInterruptHandling() {
-   //enabling interrupt handling
+
+// Start interrupt listening
+void D7SClass::startInterruptListening() {
    _interruptEnabled = 1;
 }
 
-//stop interrupt handling
-void D7SClass::stopInterruptHandling() {
-   //disabling interrupt handling
+// Stop interrupt listening
+void D7SClass::stopInterruptListening() {
    _interruptEnabled = 0;
 }
 
-//assing the handler to the specific event
+// Register interrupt event handler
 void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) ()) {
-   //check if event is in bound (it's the index to the handlers array)
-   if (event < 0 || event > 3) {
-      return;
-   }
-   //copy the pointer to the array
    _handlers[event] = handler;
 }
 
-void D7SClass::registerInterruptEventHandler(d7s_interrupt_event event, void (*handler) (float, float, float)) {
-  registerInterruptEventHandler(event, (void (*)()) handler);
+// Unregister interrupt event handler
+void D7SClass::unregisterInterruptEventHandler(d7s_interrupt_event event) {
+   _handlers[event] = NULL;
 }
 
 
@@ -487,65 +500,73 @@ void D7SClass::readEvents() {
 }
 
 //--- INTERRUPT HANDLER ---
-//handle the INT1 events
+
+// Handle INT1 events
 void D7SClass::int1() {
-   //enabling interrupts
-   interrupts();
-   //if the interrupt handling is enabled
-   if (_interruptEnabled) {
-      //check what event triggered the interrupt
-      if (isInShutoff()) {
-         //if the handler is defined
-         if (_handlers[2]) {
-            _handlers[2](); //SHUTOFF_EVENT EVENT
-         }
-      } else {
-         //if the handler is defined
-         if (_handlers[3]) {
-            _handlers[3](); //COLLAPSE_EVENT EVENT
-         }
+   // Check if interrupt handling is enabled
+   if (!_interruptEnabled) {
+      return;
+   }
+
+   // If the earthquake is occuring, the event is shutoff
+   if (!_shutoffHappened) {
+      if (_handlers[SHUTOFF_EVENT] != NULL) {
+         _handlers[SHUTOFF_EVENT](); // Call the user handler
+      }
+
+      _shutoffHappened = 1;
+   
+   // If the earthquake is not occuring, the event is collapse
+   } else {
+      if (_handlers[COLLAPSE_EVENT] != NULL) {
+         _handlers[COLLAPSE_EVENT](); // Call the user handler
       }
    }
 }
 
-//handle the INT2 events
+// Handle INT2 events
 void D7SClass::int2() {
-   //enabling interrupts
-   interrupts();
-   //if the interrupt handling is enabled
-   if (_interruptEnabled) {
-      //check what in what state the D7S is
-      if (isEarthquakeOccuring()) { //earthquake started
-         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
-         // as RISING the same pin detaching the previus interrupt
-         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
-            // Detaching the previus interrupt as FALLING
-            detachInterrupt(digitalPinToInterrupt(pinINT2));
-            // Attaching the same interrupt as RISING
-            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, RISING);
-         #endif
-         //if the handler is defined
-         if (_handlers[0]) {
-            _handlers[0](); //START_EARTHQUAKE EVENT
-         }
-      } else { //earthquake ended
-         // Fishino32 cannot handle CHANGE mode on interrupts, so we need to register FALLING mode first and on the isr register
-         // as RISING the same pin detaching the previus interrupt
-         #if defined(_FISHINO_PIC32_) || defined(_FISHINO32_) || defined(_FISHINO32_120_) || defined(_FISHINO32_MX470F512H_) || defined(_FISHINO32_MX470F512H_120_)
-            // Detaching the previus interrupt as FALLING
-            detachInterrupt(digitalPinToInterrupt(pinINT2));
-            // Attaching the same interrupt as RISING
-            attachInterrupt(digitalPinToInterrupt(pinINT2), isr2, FALLING);
-         #endif
-         //if the handler is defined
-         if (_handlers[1]) {
-            ((void (*)(float, float, float)) _handlers[1])(getLastestSI(0), getLastestPGA(0), getLastestTemperature(0)); //END_EARTHQUAKE EVENT
-         }
+   // Check if interrupt handling is enabled
+   if (!_interruptEnabled) {
+      return;
+   }
+
+   // If the earthquake was occuring, it's come to an end
+   if (_occuring) {
+      _occuring = 0;
+
+      if (_handlers[END_EARTHQUAKE] != NULL) {
+         _handlers[END_EARTHQUAKE](); // Call the user handler
+      }
+
+      // If the pin INT2 isn't capable of handling CHANGE interrupt event
+      if (!_pinINT2ChangeCapable) {
+         detachInterrupt(digitalPinToInterrupt(_pinINT2));
+         // Attaching the same interrupt as RISING
+         attachInterrupt(digitalPinToInterrupt(_pinINT2), isr2, RISING);
+      }
+
+      // Reset shutoff
+      _shutoffHappened = 0;      
+
+   // The earthquake is starting
+   } else {
+      _occuring = 1;
+
+      if (_handlers[START_EARTHQUAKE] != NULL) {
+         _handlers[START_EARTHQUAKE](); // Call the user handler
+      }
+
+      // If the pin INT2 isn't capable of handling CHANGE interrupt event
+      if (!_pinINT2ChangeCapable) {
+         detachInterrupt(digitalPinToInterrupt(_pinINT2));
+         attachInterrupt(digitalPinToInterrupt(_pinINT2), isr2, FALLING);
       }
    }
 }
 
-//--- ISR HANDLER ---
+
+//--- ISR GLUE ROUTINE ---
 //it handle the FALLING event that occur to the INT1 D7S pin (glue routine)
 void D7SClass::isr1() {
    D7S.int1();
