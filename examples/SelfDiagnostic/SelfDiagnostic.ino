@@ -52,7 +52,7 @@ void setup() {
   Serial.print("The result of the selftest is: ");
 
   //checking the result
-  if (D7S.getSelftestResult() == OK) {
+  if (D7S.getSelftestResult() == D7S_OK) {
     Serial.println("SUCCESS!");
   } else {
     Serial.println("ERROR!");
